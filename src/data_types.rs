@@ -1,13 +1,5 @@
 #[derive(Clone, Debug)]
 #[repr(C)]
-pub struct HelloWindow {
-    pub builder: gtk::Builder,
-    pub window: gtk::Window,
-    pub preferences: serde_json::Value,
-}
-
-#[derive(Clone, Debug)]
-#[repr(C)]
 pub struct SystemdUnits {
     pub loaded_units: Vec<String>,
     pub enabled_units: Vec<String>,
