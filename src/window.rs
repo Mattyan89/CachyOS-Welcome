@@ -17,7 +17,7 @@ use unic_langid::LanguageIdentifier;
 pub struct HelloWindow {
     pub builder: gtk::Builder,
     pub window: gtk::Window,
-    pub preferences: serde_json::Value,
+    preferences: serde_json::Value,
 }
 
 impl HelloWindow {
@@ -295,8 +295,8 @@ impl HelloWindow {
         }
     }
 
-    fn get_preferences(&self) -> &serde_json::Value {
-        &self.preferences
+    pub fn get_preferences(&self, entry: &str) -> &serde_json::Value {
+        &self.preferences[entry]
     }
 }
 

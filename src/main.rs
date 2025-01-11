@@ -223,7 +223,7 @@ fn on_link_clicked(param: &[glib::Value]) -> Option<glib::Value> {
     let name = widget.widget_name();
 
     let window_ref = unsafe { &G_HELLO_WINDOW.as_ref().unwrap().window };
-    let preferences = unsafe { &G_HELLO_WINDOW.as_ref().unwrap().preferences["urls"] };
+    let preferences = unsafe { G_HELLO_WINDOW.as_ref().unwrap().get_preferences("urls") };
 
     let uri = preferences[name.as_str()].as_str().unwrap();
     let _ = gtk::show_uri_on_window(Some(window_ref), uri, 0);
@@ -236,7 +236,7 @@ fn on_link1_clicked(param: &[glib::Value]) -> Option<glib::Value> {
     let name = widget.widget_name();
 
     let window_ref = unsafe { &G_HELLO_WINDOW.as_ref().unwrap().window };
-    let preferences = unsafe { &G_HELLO_WINDOW.as_ref().unwrap().preferences["urls"] };
+    let preferences = unsafe { G_HELLO_WINDOW.as_ref().unwrap().get_preferences("urls") };
 
     let uri = preferences[name.as_str()].as_str().unwrap();
     let _ = gtk::show_uri_on_window(Some(window_ref), uri, 0);
@@ -246,7 +246,7 @@ fn on_link1_clicked(param: &[glib::Value]) -> Option<glib::Value> {
 
 fn on_delete_window(_param: &[glib::Value]) -> Option<glib::Value> {
     let saved_json = &*G_SAVE_JSON.lock().unwrap();
-    let preferences = unsafe { &G_HELLO_WINDOW.as_ref().unwrap().preferences["save_path"] };
+    let preferences = unsafe { G_HELLO_WINDOW.as_ref().unwrap().get_preferences("save_path") };
     write_json(preferences.as_str().unwrap(), saved_json);
 
     Some(false.to_value())
