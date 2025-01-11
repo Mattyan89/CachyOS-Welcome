@@ -295,6 +295,17 @@ impl HelloWindow {
         }
     }
 
+    pub fn open_uri(&self, uri: &str) {
+        if let Err(uri_err) = gtk::show_uri_on_window(Some(&self.window), uri, 0) {
+            error!("Failed to open uri: {uri_err}");
+        }
+    }
+
+    pub fn set_stack_child_visible(&self, child_name: &str) {
+        let stack: &gtk::Stack = &self.builder.object("stack").unwrap();
+        stack.set_visible_child_name(child_name);
+    }
+
     pub fn get_preferences(&self, entry: &str) -> &serde_json::Value {
         &self.preferences[entry]
     }

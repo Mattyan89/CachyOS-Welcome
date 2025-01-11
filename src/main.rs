@@ -211,9 +211,8 @@ fn on_btn_clicked(param: &[glib::Value]) -> Option<glib::Value> {
     let widget = param[0].get::<gtk::Button>().unwrap();
     let name = widget.widget_name();
 
-    let builder_ref = unsafe { &G_HELLO_WINDOW.as_ref().unwrap().builder };
-    let stack: &gtk::Stack = &builder_ref.object("stack").unwrap();
-    stack.set_visible_child_name(&format!("{name}page"));
+    let child_name = format!("{name}page");
+    unsafe { G_HELLO_WINDOW.as_ref().unwrap().set_stack_child_visible(&child_name) };
 
     None
 }
@@ -222,11 +221,10 @@ fn on_link_clicked(param: &[glib::Value]) -> Option<glib::Value> {
     let widget = param[0].get::<gtk::Widget>().unwrap();
     let name = widget.widget_name();
 
-    let window_ref = unsafe { &G_HELLO_WINDOW.as_ref().unwrap().window };
     let preferences = unsafe { G_HELLO_WINDOW.as_ref().unwrap().get_preferences("urls") };
 
     let uri = preferences[name.as_str()].as_str().unwrap();
-    let _ = gtk::show_uri_on_window(Some(window_ref), uri, 0);
+    unsafe { G_HELLO_WINDOW.as_ref().unwrap().open_uri(uri) };
 
     None
 }
@@ -235,11 +233,10 @@ fn on_link1_clicked(param: &[glib::Value]) -> Option<glib::Value> {
     let widget = param[0].get::<gtk::Widget>().unwrap();
     let name = widget.widget_name();
 
-    let window_ref = unsafe { &G_HELLO_WINDOW.as_ref().unwrap().window };
     let preferences = unsafe { G_HELLO_WINDOW.as_ref().unwrap().get_preferences("urls") };
 
     let uri = preferences[name.as_str()].as_str().unwrap();
-    let _ = gtk::show_uri_on_window(Some(window_ref), uri, 0);
+    unsafe { G_HELLO_WINDOW.as_ref().unwrap().open_uri(uri) };
 
     Some(false.to_value())
 }
