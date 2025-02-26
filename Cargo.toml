@@ -24,7 +24,7 @@ serde_json = "1"
 reqwest = { version = "0.12", features = ["blocking", "json"] }
 unic-langid = "0.9"
 phf = { version = "0.11", features = ["macros"], default-features = false }
-chwd = { git = "https://github.com/CachyOS/chwd", rev = "91566b7118673d601cb39846c33d25e818bbec3c", version = "1.11.4" }
+chwd = { git = "https://github.com/CachyOS/chwd", rev = "6e844f9a18ab16bf063ba45122b6d4cad6cd6169", version = "1.12.0" }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
