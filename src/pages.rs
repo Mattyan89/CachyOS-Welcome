@@ -1,7 +1,7 @@
 use crate::application_browser::ApplicationBrowser;
 use crate::systemd_units::SystemdUnits;
 use crate::utils::PacmanWrapper;
-use crate::{fl, systemd_units, utils};
+use crate::{fl, kwin_dbus, systemd_units, utils};
 
 use std::boxed::Box;
 use std::fmt::Write;
@@ -262,10 +262,9 @@ fn get_nm_connections() -> Vec<String> {
 }
 
 fn launch_kwin_debug_window() {
-    let _ = Exec::cmd("qdbus6")
-        .args(&["org.kde.KWin", "/KWin", "org.kde.KWin.showDebugConsole"])
-        .join()
-        .unwrap();
+    if let Err(kwin_err) = kwin_dbus::launch_kwin_debug_window() {
+        error!("Failed to launch kwin debug window: {kwin_err}");
+    }
 }
 
 fn create_fixes_section(builder: &Builder) -> gtk::Box {

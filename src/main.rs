@@ -7,6 +7,7 @@ mod config;
 mod embed_data;
 mod gresource;
 mod installer;
+mod kwin_dbus;
 mod localization;
 mod logger;
 mod pages;
