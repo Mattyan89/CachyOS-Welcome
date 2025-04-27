@@ -13,13 +13,13 @@ fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
 
     let status = Command::new("glib-compile-resources")
-        .arg(format!("--target={}/cachyos-welcome.gresource", out_dir))
+        .arg(format!("--target={out_dir}/cachyos-welcome.gresource"))
         .arg("cachyos-welcome.gresource.xml")
         .status()
         .unwrap();
 
     if !status.success() {
-        eprintln!("glib-compile-resources failed with exit status {}", status);
+        eprintln!("glib-compile-resources failed with exit status {status}");
         process::exit(1);
     }
 
