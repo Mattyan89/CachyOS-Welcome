@@ -38,6 +38,11 @@ dns-server-reset-failed = Failed to reset DNS server!
 
 # Tweaks page (tweaks)
 tweak-enabled-title = {$tweak} enabled
+tweak-psd-tooltip = Use RAM for browser profiles (faster, less disk wear)
+tweak-oomd-tooltip = Proactively kill processes during low memory to prevent freezes
+tweak-bpftune-tooltip = Automatically tune system network
+tweak-bluetooth-tooltip = Enable support for Bluetooth wireless devices (mice, audio, etc.)
+tweak-ananicycpp-tooltip = Auto-adjust process priorities for better system responsiveness
 
 # Tweaks page (fixes)
 remove-lock-title = Remove db lock

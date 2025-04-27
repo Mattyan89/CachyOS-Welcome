@@ -531,6 +531,13 @@ fn create_options_section() -> gtk::Box {
     let ananicy_cpp_btn =
         create_tweak_checkbox!("Ananicy Cpp", "ananicy-cpp.service", "service", "ananicy-cpp");
 
+    // set tooltips
+    psd_btn.set_tooltip_text(Some(&fl!("tweak-psd-tooltip")));
+    systemd_oomd_btn.set_tooltip_text(Some(&fl!("tweak-oomd-tooltip")));
+    bpftune_btn.set_tooltip_text(Some(&fl!("tweak-bpftune-tooltip")));
+    bluetooth_btn.set_tooltip_text(Some(&fl!("tweak-bluetooth-tooltip")));
+    ananicy_cpp_btn.set_tooltip_text(Some(&fl!("tweak-ananicycpp-tooltip")));
+
     topbox.pack_start(&label, true, false, 1);
     box_collection.pack_start(&psd_btn, true, false, 2);
     box_collection_s.pack_start(&systemd_oomd_btn, true, false, 2);
