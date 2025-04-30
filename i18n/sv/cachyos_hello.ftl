@@ -42,7 +42,6 @@ tweak-enabled-title = {$tweak} aktiverad
 # Tweaks page (fixes)
 remove-lock-title = Ta bort databaslås
 reinstall-title = Installera om alla paket
-refresh-keyrings-title = Uppdatera nyckelringar
 update-system-title = Systemuppdatering
 remove-orphans-title = Ta bort föräldralösa
 clear-pkgcache-title = Töm paketcache

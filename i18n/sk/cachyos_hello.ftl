@@ -41,7 +41,6 @@ tweak-enabled-title = {$tweak} povolené
 # Stránka s úpravami (opravy)
 remove-lock-title = Odstrániť zámok db
 reinstall-title = Preinštalovať všetky balíčky
-refresh-keyrings-title = Obnoviť kľúčenky
 update-system-title = Aktualizácia systému
 remove-orphans-title = Odstrániť siroty balíčkov
 clear-pkgcache-title = Vyčistiť cache balíčkov

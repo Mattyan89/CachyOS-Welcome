@@ -42,7 +42,6 @@ tweak-enabled-title = {$tweak} habilitat
 # Tweaks page (fixes)
 remove-lock-title = Suprimeix el blocatge de la base de dades
 reinstall-title = Reinstal·la tots els paquets
-refresh-keyrings-title = Resfresca els clauers
 update-system-title = Actualització del sistema
 remove-orphans-title = Suprimeix els paquets orfes
 clear-pkgcache-title = Neteja la cau de paquets

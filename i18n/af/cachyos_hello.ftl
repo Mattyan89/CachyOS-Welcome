@@ -42,7 +42,6 @@ tweak-enabled-title = {$tweak} geaktiveer
 # Tweaks page (fixes)
 remove-lock-title = Verwyder db-slot
 reinstall-title = Herinstalleer alle pakkette
-refresh-keyrings-title = Verfris sleutelringe
 update-system-title = Stelsel opdatering
 remove-orphans-title = Skrap onteiende pakkette
 clear-pkgcache-title = Maak pakketcache skoon

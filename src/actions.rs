@@ -156,29 +156,15 @@ pub fn remove_orphans(dialog_tx: Sender<DialogMessage>) {
     let _ = utils::run_cmd_terminal(format!("pacman -Rns {orphan_pkgs}"), true);
 }
 
-pub fn refresh_keyring() {
-    let pacman = pacmanconf::Config::with_opts(None, Some("/etc/pacman.conf"), Some("/")).unwrap();
-    let alpm = alpm_utils::alpm_with_conf(&pacman).unwrap();
+pub fn reset_keyring() {
+    let key_reset = r#"
+rm -rf /etc/pacman.d/gnupg/ && \
+pacman-key --init && pacman-key --populate && \
+pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com && \
+pacman-key --lsign-key F3B607488DB35A47
+"#;
 
-    // search local database for packages matching the regex ".*-keyring"
-    // e.g pacman -Qq | grep keyring
-    let needles: &[String] = &[".*-keyring".into()];
-    let found_keyrings = alpm
-        .localdb()
-        .search(needles.iter())
-        .unwrap()
-        .into_iter()
-        .filter(|pkg| pkg.name() != "gnome-keyring" && pkg.name() != "python-keyring")
-        .fold(String::new(), |mut output, pkg| {
-            let pkgname = str::replace(pkg.name(), "-keyring", "");
-            let _ = write!(output, "{pkgname} ");
-            output
-        });
-
-    let _ = utils::run_cmd_terminal(
-        format!("pacman-key --init && pacman-key --populate {found_keyrings}"),
-        true,
-    );
+    let _ = utils::run_cmd_terminal(key_reset.into(), true);
 }
 
 pub fn install_needed_packages(

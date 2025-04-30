@@ -40,7 +40,7 @@ tweak-enabled-title = {$tweak} включен
 # Tweaks page (fixes)
 remove-lock-title = Удалить db lock
 reinstall-title = Переустановить все пакеты
-refresh-keyrings-title = Обновить ключи
+reset-keyrings-title = Сбросить ключи
 update-system-title = Обновить систему
 remove-orphans-title = Удалить orphans
 clear-pkgcache-title = Очистить кэш пакетов

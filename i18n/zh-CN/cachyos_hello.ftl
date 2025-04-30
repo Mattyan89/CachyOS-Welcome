@@ -39,7 +39,6 @@ tweak-enabled-title = {$tweak} 已启用
 # Tweaks page (fixes)
 remove-lock-title = 移除数据库锁
 reinstall-title = 重新安装所有软件包
-refresh-keyrings-title = 刷新密钥环
 update-system-title = 更新系统
 remove-orphans-title = 删除孤立软件包
 clear-pkgcache-title = 清理软件包缓存

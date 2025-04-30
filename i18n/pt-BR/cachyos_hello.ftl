@@ -42,7 +42,6 @@ tweak-enabled-title = {$tweak} ativado
 # Tweaks page (fixes)
 remove-lock-title = Remover Trava do Banco de Dados Pacman (db lock)
 reinstall-title = Reinstalar Todos os Pacotes
-refresh-keyrings-title = Atualizar Keyrings
 update-system-title = Atualizar Sistema
 remove-orphans-title = Remover Pacotes Órfãos
 clear-pkgcache-title = Limpar cache de pacotes

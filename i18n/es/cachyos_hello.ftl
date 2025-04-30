@@ -42,7 +42,6 @@ tweak-enabled-title = {$tweak} habilitado
 # Tweaks page (fixes)
 remove-lock-title = Remover bloqueo de la base de datos
 reinstall-title = Reinstalar todos los paquetes
-refresh-keyrings-title = Actualizar keyrings
 update-system-title = Actualización del sistema
 remove-orphans-title = Eliminar paquetes huérfanos
 clear-pkgcache-title = Limpiar cache de los paquetes

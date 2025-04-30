@@ -42,7 +42,6 @@ tweak-enabled-title = {$tweak} ingeschakeld
 # Tweaks page (fixes)
 remove-lock-title = Db-vergrendeling opheffen
 reinstall-title = Alle pakketten herinstalleren
-refresh-keyrings-title = Sleutelbossen vernieuwen
 update-system-title = Systeem bijwerken
 remove-orphans-title = Onteigende pakketten verwijderen
 clear-pkgcache-title = Pakketcache wissen

@@ -42,7 +42,6 @@ tweak-enabled-title = {$tweak} etkinleştirildi.
 # Tweaks page (fixes)
 remove-lock-title = Pacman veri tabanı kilidini kaldır
 reinstall-title = Tüm paketleri yeniden kur
-refresh-keyrings-title = Veri anahtarlıklarını yenile
 update-system-title = Sistem güncellemesi
 remove-orphans-title = Artıkları(orphans) kaldır
 clear-pkgcache-title = Önbellekteki paketleri temizle 

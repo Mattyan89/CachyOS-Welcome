@@ -47,7 +47,7 @@ tweak-ananicycpp-tooltip = Auto-adjust process priorities for better system resp
 # Tweaks page (fixes)
 remove-lock-title = Remove db lock
 reinstall-title = Reinstall all packages
-refresh-keyrings-title = Refresh keyrings
+reset-keyrings-title = Reset keyrings
 update-system-title = System update
 remove-orphans-title = Remove orphans
 clear-pkgcache-title = Clear package cache

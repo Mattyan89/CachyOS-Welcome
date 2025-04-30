@@ -260,7 +260,7 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
 
     let removelock_btn = create_gtk_button!("remove-lock-title");
     let reinstall_btn = create_gtk_button!("reinstall-title");
-    let refreshkeyring_btn = create_gtk_button!("refresh-keyrings-title");
+    let resetkeyring_btn = create_gtk_button!("reset-keyrings-title");
     let update_system_btn = create_gtk_button!("update-system-title");
     let remove_orphans_btn = create_gtk_button!("remove-orphans-title");
     let clear_pkgcache_btn = create_gtk_button!("clear-pkgcache-title");
@@ -290,7 +290,7 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
             actions::reinstall_packages();
         });
     });
-    refreshkeyring_btn.connect_clicked(on_refreshkeyring_btn_clicked);
+    resetkeyring_btn.connect_clicked(on_resetkeyring_btn_clicked);
     update_system_btn.connect_clicked(on_update_system_btn_clicked);
     remove_orphans_btn.connect_clicked(move |_| {
         // Spawn child process in separate thread.
@@ -368,7 +368,7 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
     topbox.pack_start(&label, true, false, 1);
     button_box_f.pack_start(&update_system_btn, true, true, 2);
     button_box_f.pack_start(&reinstall_btn, true, true, 2);
-    button_box_f.pack_end(&refreshkeyring_btn, true, true, 2);
+    button_box_f.pack_end(&resetkeyring_btn, true, true, 2);
     button_box_s.pack_start(&removelock_btn, true, true, 2);
     button_box_s.pack_start(&clear_pkgcache_btn, true, true, 2);
     button_box_s.pack_end(&remove_orphans_btn, true, true, 2);
@@ -875,10 +875,10 @@ fn on_servbtn_clicked(button: &gtk::CheckButton) {
     );
 }
 
-fn on_refreshkeyring_btn_clicked(_: &gtk::Button) {
+fn on_resetkeyring_btn_clicked(_: &gtk::Button) {
     // Spawn child process in separate thread.
     std::thread::spawn(move || {
-        actions::refresh_keyring();
+        actions::reset_keyring();
     });
 }
 
