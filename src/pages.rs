@@ -1,10 +1,8 @@
 use crate::application_browser::ApplicationBrowser;
 use crate::systemd_units::SystemdUnits;
-use crate::utils::PacmanWrapper;
-use crate::{fl, kwin_dbus, systemd_units, utils};
+use crate::{actions, fl, systemd_units, utils};
 
 use std::boxed::Box;
-use std::fmt::Write;
 use std::path::Path;
 use std::str;
 use std::sync::Mutex;
@@ -15,7 +13,7 @@ use glib::translate::FromGlib;
 use gtk::{glib, Builder};
 use once_cell::sync::Lazy;
 use phf::phf_ordered_map;
-use subprocess::{Exec, Redirection};
+use subprocess::Exec;
 use tokio::runtime::Runtime;
 use tracing::{debug, error};
 use which::which;
@@ -57,13 +55,13 @@ static G_DNS_SERVERS: phf::OrderedMap<&'static str, &'static str> = phf_ordered_
     "Yandex" => "77.88.8.8,77.88.8.1",
 };
 
-struct DialogMessage {
+pub struct DialogMessage {
     pub msg: String,
     pub msg_type: gtk::MessageType,
     pub action: Action,
 }
 
-enum Action {
+pub enum Action {
     RemoveLock,
     RemoveOrphans,
     SetDnsServer,
@@ -249,24 +247,6 @@ fn connect_tweak(check_btn: &gtk::CheckButton, action_data: &'static str) {
     connect_clicked_and_save(check_btn, on_servbtn_clicked);
 }
 
-fn get_nm_connections() -> Vec<String> {
-    let connections = Exec::cmd("/sbin/nmcli")
-        .args(&["-t", "-f", "NAME", "connection", "show"])
-        .stdout(Redirection::Pipe)
-        .capture()
-        .unwrap()
-        .stdout_str();
-
-    // get list of connections separated by newline
-    connections.split('\n').filter(|x| !x.is_empty()).map(String::from).collect::<Vec<_>>()
-}
-
-fn launch_kwin_debug_window() {
-    if let Err(kwin_err) = kwin_dbus::launch_kwin_debug_window() {
-        error!("Failed to launch kwin debug window: {kwin_err}");
-    }
-}
-
 fn create_fixes_section(builder: &Builder) -> gtk::Box {
     let topbox = gtk::Box::new(gtk::Orientation::Vertical, 2);
     let button_box_f = gtk::Box::new(gtk::Orientation::Horizontal, 10);
@@ -301,37 +281,13 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
     removelock_btn.connect_clicked(move |_| {
         let dialog_tx_clone = dialog_tx_clone.clone();
         std::thread::spawn(move || {
-            if Path::new("/var/lib/pacman/db.lck").exists() {
-                let _ = Exec::cmd("/sbin/pkexec")
-                    .arg("bash")
-                    .arg("-c")
-                    .arg("rm /var/lib/pacman/db.lck")
-                    .join()
-                    .unwrap();
-                if !Path::new("/var/lib/pacman/db.lck").exists() {
-                    dialog_tx_clone
-                        .send(DialogMessage {
-                            msg: fl!("removed-db-lock"),
-                            msg_type: gtk::MessageType::Info,
-                            action: Action::RemoveLock,
-                        })
-                        .expect("Couldn't send data to channel");
-                }
-            } else {
-                dialog_tx_clone
-                    .send(DialogMessage {
-                        msg: fl!("lock-doesnt-exist"),
-                        msg_type: gtk::MessageType::Info,
-                        action: Action::RemoveLock,
-                    })
-                    .expect("Couldn't send data to channel");
-            }
+            actions::remove_dblock(dialog_tx_clone);
         });
     });
     reinstall_btn.connect_clicked(move |_| {
         // Spawn child process in separate thread.
         std::thread::spawn(move || {
-            let _ = utils::run_cmd_terminal(String::from("pacman -S $(pacman -Qnq)"), true);
+            actions::reinstall_packages();
         });
     });
     refreshkeyring_btn.connect_clicked(on_refreshkeyring_btn_clicked);
@@ -340,28 +296,7 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
         // Spawn child process in separate thread.
         let dialog_tx_clone = dialog_tx.clone();
         std::thread::spawn(move || {
-            // check if you have orphans packages.
-            let mut orphan_pkgs = Exec::cmd("/sbin/pacman")
-                .arg("-Qtdq")
-                .stdout(Redirection::Pipe)
-                .capture()
-                .unwrap()
-                .stdout_str();
-
-            // get list of packages separated by space,
-            // and check if it's empty or not.
-            orphan_pkgs = orphan_pkgs.replace('\n', " ");
-            if orphan_pkgs.is_empty() {
-                dialog_tx_clone
-                    .send(DialogMessage {
-                        msg: fl!("orphans-not-found"),
-                        msg_type: gtk::MessageType::Info,
-                        action: Action::RemoveOrphans,
-                    })
-                    .expect("Couldn't send data to channel");
-                return;
-            }
-            let _ = utils::run_cmd_terminal(format!("pacman -Rns {orphan_pkgs}"), true);
+            actions::remove_orphans(dialog_tx_clone);
         });
     });
     clear_pkgcache_btn.connect_clicked(on_clear_pkgcache_btn_clicked);
@@ -372,65 +307,41 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
         });
     });
     install_gaming_btn.connect_clicked(move |_| {
-        let dialog_tx_gaming = dialog_tx_gaming.clone();
         // Spawn child process in separate thread.
+        let dialog_tx_gaming = dialog_tx_gaming.clone();
         std::thread::spawn(move || {
             const ALPM_PACKAGE_NAMES: [&str; 2] =
                 ["cachyos-gaming-meta", "cachyos-gaming-applications"];
-            let mut packages_to_install = Vec::new();
-            for alpm_package_name in ALPM_PACKAGE_NAMES {
-                if !utils::is_alpm_pkg_installed(alpm_package_name) {
-                    packages_to_install.push(alpm_package_name);
-                }
-            }
-            if packages_to_install.is_empty() {
-                dialog_tx_gaming
-                    .send(DialogMessage {
-                        msg: fl!("gaming-package-installed"),
-                        msg_type: gtk::MessageType::Info,
-                        action: Action::InstallGaming,
-                    })
-                    .expect("Couldn't send data to channel");
-            } else {
-                let packages = packages_to_install.join(" ");
-                let _ = utils::run_cmd_terminal(format!("pacman -S {packages}"), true);
-            }
+            actions::install_needed_packages(
+                &ALPM_PACKAGE_NAMES,
+                fl!("gaming-package-installed"),
+                Action::InstallGaming,
+                dialog_tx_gaming,
+            );
         });
     });
     install_snapper_btn.connect_clicked(move |_| {
-        let dialog_tx_gaming = dialog_tx_snapper.clone();
         // Spawn child process in separate thread.
+        let dialog_tx_snapper = dialog_tx_snapper.clone();
         std::thread::spawn(move || {
-            const alpm_package_name: &str = "cachyos-snapper-support";
-            if !utils::is_alpm_pkg_installed(alpm_package_name) {
-                let _ = utils::run_cmd_terminal(format!("pacman -S {alpm_package_name}"), true);
-            } else {
-                dialog_tx_gaming
-                    .send(DialogMessage {
-                        msg: fl!("snapper-package-installed"),
-                        msg_type: gtk::MessageType::Info,
-                        action: Action::InstallSnapper,
-                    })
-                    .expect("Couldn't send data to channel");
-            }
+            actions::install_needed_packages(
+                &["cachyos-snapper-support"],
+                fl!("snapper-package-installed"),
+                Action::InstallSnapper,
+                dialog_tx_snapper,
+            );
         });
     });
     install_spoof_dpi_btn.connect_clicked(move |_| {
-        let dialog_tx_spoof_dpi = dialog_tx_spoof.clone();
         // Spawn child process in separate thread.
+        let dialog_tx_spoof = dialog_tx_spoof.clone();
         std::thread::spawn(move || {
-            const alpm_package_name: &str = "spoofdpi";
-            if !utils::is_alpm_pkg_installed(alpm_package_name) {
-                let _ = utils::run_cmd_terminal(format!("pacman -S {alpm_package_name}"), true);
-            } else {
-                dialog_tx_spoof_dpi
-                    .send(DialogMessage {
-                        msg: fl!("spoof-dpi-package-installed"),
-                        msg_type: gtk::MessageType::Info,
-                        action: Action::InstallSnapper,
-                    })
-                    .expect("Couldn't send data to channel");
-            }
+            actions::install_needed_packages(
+                &["spoofdpi"],
+                fl!("spoof-dpi-package-installed"),
+                Action::InstallSnapper,
+                dialog_tx_spoof,
+            );
         });
     });
 
@@ -496,7 +407,7 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
                 // Spawn child process in separate thread.
                 std::thread::spawn(move || {
                     // do we even need to start that in separate thread. should be fine without
-                    launch_kwin_debug_window();
+                    actions::launch_kwin_debug_window();
                 });
             });
             button_box_frth.pack_end(&kwinw_debug_btn, true, true, 2);
@@ -609,7 +520,7 @@ fn create_connections_section() -> gtk::Box {
 
     let combo_conn = {
         let store = gtk::ListStore::new(&[String::static_type()]);
-        let nm_connections = get_nm_connections();
+        let nm_connections = actions::get_nm_connections();
         for nm_connection in nm_connections.iter() {
             store.set(&store.append(), &[(0, nm_connection)]);
         }
@@ -658,32 +569,7 @@ fn create_connections_section() -> gtk::Box {
         };
         let server_addr = G_DNS_SERVERS.get(&server_name).unwrap();
         std::thread::spawn(move || {
-            let status_code = Exec::cmd("/sbin/pkexec")
-                .arg("bash")
-                .arg("-c")
-                .arg(format!(
-                    "nmcli con mod '{conn_name}' ipv4.dns '{server_addr}' && systemctl restart \
-                     NetworkManager"
-                ))
-                .join()
-                .unwrap();
-            if status_code.success() {
-                dialog_tx_clone
-                    .send(DialogMessage {
-                        msg: fl!("dns-server-changed"),
-                        msg_type: gtk::MessageType::Info,
-                        action: Action::SetDnsServer,
-                    })
-                    .expect("Couldn't send data to channel");
-            } else {
-                dialog_tx_clone
-                    .send(DialogMessage {
-                        msg: fl!("dns-server-failed"),
-                        msg_type: gtk::MessageType::Error,
-                        action: Action::SetDnsServer,
-                    })
-                    .expect("Couldn't send data to channel");
-            }
+            actions::change_dns_server(&conn_name, server_addr, dialog_tx_clone);
         });
     });
     let dialog_tx_clone = dialog_tx.clone();
@@ -701,31 +587,7 @@ fn create_connections_section() -> gtk::Box {
             }
         };
         std::thread::spawn(move || {
-            let status_code = Exec::cmd("/sbin/pkexec")
-                .arg("bash")
-                .arg("-c")
-                .arg(format!(
-                    "nmcli con mod '{conn_name}' ipv4.dns '' && systemctl restart NetworkManager"
-                ))
-                .join()
-                .unwrap();
-            if status_code.success() {
-                dialog_tx_clone
-                    .send(DialogMessage {
-                        msg: fl!("dns-server-reset"),
-                        msg_type: gtk::MessageType::Info,
-                        action: Action::SetDnsServer,
-                    })
-                    .expect("Couldn't send data to channel");
-            } else {
-                dialog_tx_clone
-                    .send(DialogMessage {
-                        msg: fl!("dns-server-reset-failed"),
-                        msg_type: gtk::MessageType::Error,
-                        action: Action::SetDnsServer,
-                    })
-                    .expect("Couldn't send data to channel");
-            }
+            actions::reset_dns_server(&conn_name, dialog_tx_clone);
         });
     });
 
@@ -1014,54 +876,23 @@ fn on_servbtn_clicked(button: &gtk::CheckButton) {
 }
 
 fn on_refreshkeyring_btn_clicked(_: &gtk::Button) {
-    let pacman = pacmanconf::Config::with_opts(None, Some("/etc/pacman.conf"), Some("/")).unwrap();
-    let alpm = alpm_utils::alpm_with_conf(&pacman).unwrap();
-
-    // search local database for packages matching the regex ".*-keyring"
-    // e.g pacman -Qq | grep keyring
-    let needles: &[String] = &[".*-keyring".into()];
-    let found_keyrings = alpm
-        .localdb()
-        .search(needles.iter())
-        .unwrap()
-        .into_iter()
-        .filter(|pkg| pkg.name() != "gnome-keyring" && pkg.name() != "python-keyring")
-        .fold(String::new(), |mut output, pkg| {
-            let pkgname = str::replace(pkg.name(), "-keyring", "");
-            let _ = write!(output, "{pkgname} ");
-            output
-        });
-
     // Spawn child process in separate thread.
     std::thread::spawn(move || {
-        let _ = utils::run_cmd_terminal(
-            format!("pacman-key --init && pacman-key --populate {found_keyrings}"),
-            true,
-        );
+        actions::refresh_keyring();
     });
 }
 
 fn on_update_system_btn_clicked(_: &gtk::Button) {
-    let (cmd, escalate) = match utils::get_pacman_wrapper() {
-        PacmanWrapper::Aura => ("aura -Syu && aura -Akaxu", false),
-        _ => ("pacman -Syu", true),
-    };
     // Spawn child process in separate thread.
     std::thread::spawn(move || {
-        let _ = utils::run_cmd_terminal(String::from(cmd), escalate);
+        actions::update_system();
     });
 }
 
 fn on_clear_pkgcache_btn_clicked(_: &gtk::Button) {
-    let (cmd, escalate) = match utils::get_pacman_wrapper() {
-        PacmanWrapper::Pak => ("pak -Sc", false),
-        PacmanWrapper::Yay => ("yay -Sc", false),
-        PacmanWrapper::Paru => ("paru -Sc", false),
-        _ => ("pacman -Sc", true),
-    };
     // Spawn child process in separate thread.
     std::thread::spawn(move || {
-        let _ = utils::run_cmd_terminal(String::from(cmd), escalate);
+        actions::clear_pkgcache();
     });
 }
 
@@ -1082,22 +913,13 @@ fn on_appbtn_clicked(button: &gtk::Button) {
         return;
     }
 
-    // Create context channel.
-    let (tx, rx) = glib::MainContext::channel(glib::Priority::default());
-
     // Spawn child process in separate thread.
     std::thread::spawn(move || {
         // Get executable path.
         let exec_path = exec_path.unwrap().to_str().unwrap().to_owned();
         let exit_status = Exec::cmd(exec_path).detached().join().expect("Failed to spawn process");
 
-        tx.send(format!("Exit status successfully? = {:?}", exit_status.success()))
-            .expect("Couldn't send data to channel");
-    });
-
-    rx.attach(None, move |text| {
-        debug!("{text}");
-        glib::ControlFlow::Continue
+        debug!("Exit status successfully? = {:?}", exit_status.success());
     });
 }
 
