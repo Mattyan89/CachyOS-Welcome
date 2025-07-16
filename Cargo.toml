@@ -12,23 +12,23 @@ pacmanconf = "3"
 
 subprocess = "0.2"
 once_cell = { default-features = false, version = "1.19" }
-i18n-embed = { version = "0.15", features = ["fluent-system", "desktop-requester"] }
-i18n-embed-fl = "0.9"
+i18n-embed = { version = "0.16", features = ["fluent-system", "desktop-requester"] }
+i18n-embed-fl = "0.10"
 rust-embed = { version = "8", features = ["debug-embed", "include-exclude"] }
 gtk = { version = "0.18", default-features = false }
-gio = { version = "0.20", default-features = false }
-gdk-pixbuf = "0.20"
-glib = { default-features = false, version = "0.20" }
+gio = { version = "0.21", default-features = false }
+gdk-pixbuf = "0.21"
+glib = { default-features = false, version = "0.21" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 reqwest = { version = "0.12", features = ["blocking", "json"] }
 unic-langid = "0.9"
-phf = { version = "0.11", features = ["macros"], default-features = false }
-chwd = { git = "https://github.com/CachyOS/chwd", rev = "1d3c3c461190b507b8e0faf3cec98befc15bb7f8", version = "1.12.7" }
+phf = { version = "0.12", features = ["macros"], default-features = false }
+chwd = { git = "https://github.com/CachyOS/chwd", rev = "1c60b2ddb7c9c61d539f8f37aed70767b026dcb9", version = "1.14.0" }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
-which = { version = "7.0", features = ["tracing"] }
+which = { version = "8.0", features = ["tracing"] }
 
 anyhow = { version = "1", default-features = false, features = ["std"] }
 tokio = { version = "1.39", features = ["macros", "sync", "rt-multi-thread"] }
