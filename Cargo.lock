@@ -391,7 +391,7 @@ checksum = "d71b6127be86fdcfddb610f7182ac57211d4b18a3e9c82eb2d17662f2227ad6a"
 
 [[package]]
 name = "cachyos-hello"
-version = "0.17.2"
+version = "0.18.0"
 dependencies = [
  "alpm",
  "alpm-utils",
