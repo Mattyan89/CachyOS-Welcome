@@ -20,20 +20,54 @@ pub fn get_nm_connections() -> Vec<String> {
     connections.split('\n').filter(|x| !x.is_empty()).map(String::from).collect::<Vec<_>>()
 }
 
+pub fn get_active_connection_name() -> Option<String> {
+    let active_conns = Exec::cmd("/sbin/nmcli")
+        .args(&["-g", "NAME", "connection", "show", "--active"])
+        .stdout(Redirection::Pipe)
+        .capture()
+        .unwrap()
+        .stdout_str();
+
+    active_conns.lines().next().map(String::from)
+}
+
+pub fn get_dns_for_connection(conn_name: &str) -> Option<(String, String)> {
+    let ips = Exec::cmd("/sbin/nmcli")
+        .args(&["-g", "ipv4.dns,ipv6.dns", "con", "show", conn_name])
+        .stdout(Redirection::Pipe)
+        .capture()
+        .unwrap()
+        .stdout_str();
+
+    let mut lines = ips.lines();
+    let ipv4_dns = lines.next().unwrap_or("").to_owned();
+    let ipv6_dns = lines.next().unwrap_or("").replace("\\:", ":");
+
+    if ipv4_dns.is_empty() && ipv6_dns.is_empty() {
+        None
+    } else {
+        Some((ipv4_dns, ipv6_dns))
+    }
+}
+
 pub fn launch_kwin_debug_window() {
     if let Err(kwin_err) = kwin_dbus::launch_kwin_debug_window() {
         error!("Failed to launch kwin debug window: {kwin_err}");
     }
 }
 
-pub fn change_dns_server(conn_name: &str, server_addr_ipv4: &str, server_addr_ipv6: &str, dialog_tx: Sender<DialogMessage>) {
+pub fn change_dns_server(
+    conn_name: &str,
+    server_addr_ipv4: &str,
+    server_addr_ipv6: &str,
+    dialog_tx: Sender<DialogMessage>,
+) {
     let status_code = Exec::cmd("/sbin/pkexec")
         .arg("bash")
         .arg("-c")
         .arg(format!(
-            "nmcli con mod '{conn_name}' ipv4.dns '{server_addr_ipv4}' && \
-             nmcli con mod '{conn_name}' ipv6.dns '{server_addr_ipv6}' && \
-             systemctl restart NetworkManager"
+            "nmcli con mod '{conn_name}' ipv4.dns '{server_addr_ipv4}' && nmcli con mod \
+             '{conn_name}' ipv6.dns '{server_addr_ipv6}' && systemctl restart NetworkManager"
         ))
         .join()
         .unwrap();
@@ -61,9 +95,8 @@ pub fn reset_dns_server(conn_name: &str, dialog_tx: Sender<DialogMessage>) {
         .arg("bash")
         .arg("-c")
         .arg(format!(
-            "nmcli con mod '{conn_name}' ipv4.dns '' && \
-             nmcli con mod '{conn_name}' ipv6.dns '' && \
-             systemctl restart NetworkManager"
+            "nmcli con mod '{conn_name}' ipv4.dns '' && nmcli con mod '{conn_name}' ipv6.dns '' \
+             && systemctl restart NetworkManager"
         ))
         .join()
         .unwrap();

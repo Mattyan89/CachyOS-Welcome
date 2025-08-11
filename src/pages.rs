@@ -52,7 +52,7 @@ static G_DNS_SERVERS: phf::OrderedMap<&'static str, (&'static str, &'static str)
     "Cisco Umbrella(OpenDNS)" => ("208.67.222.222,208.67.220.220", "2620:119:35::35,2620:119:53::53"),
     "DNS.Watch" => ("84.200.69.80,84.200.70.40", "2001:1608:10:25::1c04:b12f,2001:1608:10:25::9249:d69b"),
     "GCore" => ("95.85.95.85,2.56.220.2", "2a03:90c0:999d::1,2a03:90c0:9992::1"),
-    "Google" => ("8.8.8.8,8.8.4.4", "2001:4860:4860::8888,2001:4860:4860::8844"),    
+    "Google" => ("8.8.8.8,8.8.4.4", "2001:4860:4860::8888,2001:4860:4860::8844"),
     "Quad9" => ("9.9.9.9,149.112.112.112", "2620:fe::fe,2620:fe::9"),
     "Yandex" => ("77.88.8.8,77.88.8.1", "2a02:6b8::feed:0ff,2a02:6b8:0:1::feed:0ff"),
     "Yandex Malware blocking" => ("77.88.8.88,77.88.8.2", "2a02:6b8::feed:bad,2a02:6b8:0:1::feed:bad"),
@@ -253,6 +253,21 @@ fn connect_tweak(check_btn: &gtk::CheckButton, action_data: &'static str) {
         check_btn.set_active(true);
     }
     connect_clicked_and_save(check_btn, on_servbtn_clicked);
+}
+
+fn selection_index_for_connection(conn_name: &str) -> usize {
+    if let Some((ipv4_dns, ipv6_dns)) = actions::get_dns_for_connection(conn_name) {
+        for (key_index, (_name, (ipv4_map, ipv6_map))) in G_DNS_SERVERS.entries().enumerate() {
+            if (!ipv4_dns.is_empty() && &ipv4_dns == ipv4_map)
+                || (!ipv6_dns.is_empty() && &ipv6_dns == ipv6_map)
+            {
+                return key_index;
+            }
+        }
+    }
+
+    // fallback to Cloudflare
+    G_DNS_SERVERS.get_index("Cloudflare").unwrap()
 }
 
 fn create_fixes_section(builder: &Builder) -> gtk::Box {
@@ -541,10 +556,43 @@ fn create_connections_section() -> gtk::Box {
         }
         utils::create_combo_with_model(&store)
     };
-    combo_servers.set_active(Some(2));
 
     combo_conn.set_widget_name("connections_combo");
     combo_servers.set_widget_name("servers_combo");
+
+    // preset the current active connection
+    if let Some(active_conn_name) = actions::get_active_connection_name() {
+        let model = combo_conn.model().unwrap();
+        if let Some(iter) = model.iter_first() {
+            loop {
+                if model.value(&iter, 0).get::<String>().unwrap() == active_conn_name {
+                    combo_conn.set_active_iter(Some(&iter));
+
+                    let selected_dns_index = selection_index_for_connection(&active_conn_name);
+                    combo_servers.set_active(Some(selected_dns_index as u32));
+                    break;
+                }
+                if !model.iter_next(&iter) {
+                    break;
+                }
+            }
+        }
+    }
+
+    // select used dns option value on connection change
+    let combo_servers_clone = combo_servers.clone();
+    combo_conn.connect_changed(move |combo| {
+        let conn_name = if let Some(tree_iter) = combo.active_iter() {
+            let model = combo.model().unwrap();
+            model.value(&tree_iter, 0).get::<String>().unwrap()
+        } else {
+            // use empty string which will trigger fallback
+            "".to_owned()
+        };
+
+        let selected_dns_index = selection_index_for_connection(&conn_name);
+        combo_servers_clone.set_active(Some(selected_dns_index as u32));
+    });
 
     // Create context channel.
     let (dialog_tx, dialog_rx) = glib::MainContext::channel(glib::Priority::default());
