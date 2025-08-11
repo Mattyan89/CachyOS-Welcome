@@ -130,9 +130,11 @@ pub fn update_translations(builder: &Builder) {
     // Update buttons
     let tweakbrowser_btn: gtk::Button = builder.object("tweaksBrowser").unwrap();
     tweakbrowser_btn.set_label(&fl!("tweaksbrowser-label"));
+    tweakbrowser_btn.set_tooltip_text(Some(&fl!("tweaksbrowser-label")));
 
     let appbrowser_btn: gtk::Button = builder.object("appBrowser").unwrap();
     appbrowser_btn.set_label(&fl!("appbrowser-label"));
+    appbrowser_btn.set_tooltip_text(Some(&fl!("appbrowser-label")));
 
     let stack: gtk::Stack = builder.object("stack").unwrap();
     {
