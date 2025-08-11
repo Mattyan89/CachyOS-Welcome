@@ -107,12 +107,16 @@ fn connectivity_check(window: &gtk::Window, message: String) -> bool {
     }
 
     // If HTTP check fails, try ping fallback to reliable DNS servers
-    
-    for target in ["2001:4860:4860::8888", "2606:4700:4700::1111", "2620:fe::fe", "8.8.8.8", "1.1.1.1", "9.9.9.9"] {
-        let ping_result = Exec::cmd("ping")
-            .args(&["-c", "1", "-W", "3", target])
-            .join();
-            
+    let targets = [
+        "2001:4860:4860::8888",
+        "2606:4700:4700::1111",
+        "2620:fe::fe",
+        "8.8.8.8",
+        "1.1.1.1",
+        "9.9.9.9",
+    ];
+    for target in targets {
+        let ping_result = Exec::cmd("/sbin/ping").args(&["-c", "1", "-W", "3", target]).join();
         if let Ok(status) = ping_result {
             if status.success() {
                 info!("Connectivity confirmed via ping to {target}");
