@@ -18,7 +18,10 @@ impl Default for SystemdUnits {
 async fn get_enabled_units(conn: &zbus::Connection) -> anyhow::Result<Vec<String>> {
     let manager = zbus_systemd::systemd1::ManagerProxy::new(conn).await?;
     let services = manager
-        .list_unit_files_by_patterns(vec!["enabled".into()], vec!["*.service".into()])
+        .list_unit_files_by_patterns(vec!["enabled".into()], vec![
+            "*.service".into(),
+            "*.timer".into(),
+        ])
         .await?;
 
     let service_files: Vec<_> = services

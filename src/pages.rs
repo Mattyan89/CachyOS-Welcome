@@ -464,6 +464,8 @@ fn create_options_section() -> gtk::Box {
         create_tweak_checkbox!("Bluetooth", "bluetooth.service", "service", "bluez");
     let ananicy_cpp_btn =
         create_tweak_checkbox!("Ananicy Cpp", "ananicy-cpp.service", "service", "ananicy-cpp");
+    let cachy_update_btn =
+        create_tweak_checkbox!("Cachy Update", "arch-update.timer", "user_service", "cachy-update");
 
     // set tooltips
     psd_btn.set_tooltip_text(Some(&fl!("tweak-psd-tooltip")));
@@ -471,12 +473,14 @@ fn create_options_section() -> gtk::Box {
     bpftune_btn.set_tooltip_text(Some(&fl!("tweak-bpftune-tooltip")));
     bluetooth_btn.set_tooltip_text(Some(&fl!("tweak-bluetooth-tooltip")));
     ananicy_cpp_btn.set_tooltip_text(Some(&fl!("tweak-ananicycpp-tooltip")));
+    cachy_update_btn.set_tooltip_text(Some(&fl!("tweak-cachyupdate-tooltip")));
 
     topbox.pack_start(&label, true, false, 1);
     box_collection.pack_start(&psd_btn, true, false, 2);
     box_collection_s.pack_start(&systemd_oomd_btn, true, false, 2);
     box_collection_s.pack_start(&bpftune_btn, true, false, 2);
     box_collection.pack_start(&ananicy_cpp_btn, true, false, 2);
+    box_collection.pack_start(&cachy_update_btn, true, false, 2);
     box_collection_s.pack_start(&bluetooth_btn, true, false, 2);
     box_collection.set_halign(gtk::Align::Fill);
     box_collection_s.set_halign(gtk::Align::Fill);
