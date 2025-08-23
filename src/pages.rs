@@ -850,7 +850,9 @@ fn toggle_service(
     let units_handle = if action_type == "user_service" { &G_GLOBAL_UNITS } else { &G_LOCAL_UNITS }
         .lock()
         .unwrap();
-    let cmd = if !units_handle.enabled_units.contains(&String::from(action_data)) {
+
+    let action_enabled = action_data.split(' ').all(|x| units_handle.enabled_units.contains(&x.to_owned()));
+    let cmd = if !action_enabled {
         if action_type == "user_service" {
             format!("systemctl --user enable --now --force {action_data}")
         } else {
