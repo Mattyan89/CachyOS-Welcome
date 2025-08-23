@@ -465,7 +465,7 @@ fn create_options_section() -> gtk::Box {
     let ananicy_cpp_btn =
         create_tweak_checkbox!("Ananicy Cpp", "ananicy-cpp.service", "service", "ananicy-cpp");
     let cachy_update_btn =
-        create_tweak_checkbox!("Cachy Update", "arch-update.timer", "user_service", "cachy-update");
+        create_tweak_checkbox!("Cachy Update", "arch-update.timer arch-update-tray.service", "user_service", "cachy-update");
 
     // set tooltips
     psd_btn.set_tooltip_text(Some(&fl!("tweak-psd-tooltip")));
