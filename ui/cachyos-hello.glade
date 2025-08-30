@@ -432,26 +432,6 @@ We, the CachyOS Developers, hope that you will enjoy using CachyOS as much as we
                 <property name="spacing">10</property>
                 <child>
                   <object class="GtkEventBox">
-                    <property name="name">telegram</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <signal name="button-press-event" handler="on_link1_clicked" swapped="no"/>
-                    <child>
-                      <object class="GtkImage" id="telegram">
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="tooltip-text">Telegram</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkEventBox">
                     <property name="name">discord</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>

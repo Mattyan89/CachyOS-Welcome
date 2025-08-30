@@ -6,7 +6,6 @@
     <file compressed="true">data/img/external-link.png</file>
     <file compressed="true">data/img/discord.png</file>
     <file compressed="true">data/img/reddit.png</file>
-    <file compressed="true">data/img/telegram.png</file>
     <file compressed="true">data/img/twitter.png</file>
   </gresource>
 </gresources>
