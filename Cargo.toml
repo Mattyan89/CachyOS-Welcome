@@ -23,8 +23,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 reqwest = { version = "0.12", features = ["blocking", "json"] }
 unic-langid = "0.9"
-phf = { version = "0.12", features = ["macros"], default-features = false }
-chwd = { git = "https://github.com/CachyOS/chwd", rev = "f84bb6d70241ac6ef204edd498c5013a01044cb9", version = "1.15.0" }
+phf = { version = "0.13", features = ["macros"], default-features = false }
+chwd = { git = "https://github.com/CachyOS/chwd", rev = "595312b31e6dd355c9a8fcd09acde24b7f9c3e3b", version = "1.16.1" }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
@@ -33,7 +33,7 @@ which = { version = "8.0", features = ["tracing"] }
 anyhow = { version = "1", default-features = false, features = ["std"] }
 tokio = { version = "1.47", features = ["macros", "sync", "rt-multi-thread"] }
 zbus = { version = "5", features = ["tokio"], default-features = false }
-zbus_systemd = { version = "0.25701.0", features = ["systemd1"], default-features = false }
+zbus_systemd = { version = "0.25800.0", features = ["systemd1"], default-features = false }
 
 [build-dependencies]
 anyhow = "1"
