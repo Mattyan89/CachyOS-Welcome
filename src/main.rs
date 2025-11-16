@@ -3,14 +3,17 @@
 
 mod actions;
 mod config;
+mod dns;
 mod embed_data;
 mod gresource;
+mod gui;
 mod installer;
 mod kwin_dbus;
 mod localization;
 mod logger;
 mod pages;
 mod systemd_units;
+mod ui;
 mod utils;
 mod window;
 

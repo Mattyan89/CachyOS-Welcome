@@ -1,4 +1,4 @@
-use crate::pages::{Action, DialogMessage, MessageType};
+use crate::ui::{Action, DialogMessage, MessageType, RunCmdCallback};
 use crate::{fl, kwin_dbus, utils, PacmanWrapper};
 
 use std::path::Path;
@@ -139,29 +139,29 @@ pub fn remove_dblock(dialog_tx: Sender<DialogMessage>) {
     }
 }
 
-pub fn update_system() {
+pub fn update_system(callback: RunCmdCallback) {
     let (cmd, escalate) = match utils::get_pacman_wrapper() {
         PacmanWrapper::Aura => ("aura -Syu && aura -Akaxu", false),
         _ => ("pacman -Syu", true),
     };
-    let _ = utils::run_cmd_terminal(String::from(cmd), escalate);
+    let _ = utils::run_cmd_terminal(callback, String::from(cmd), escalate);
 }
 
-pub fn clear_pkgcache() {
+pub fn clear_pkgcache(callback: RunCmdCallback) {
     let (cmd, escalate) = match utils::get_pacman_wrapper() {
         PacmanWrapper::Pak => ("pak -Sc", false),
         PacmanWrapper::Yay => ("yay -Sc", false),
         PacmanWrapper::Paru => ("paru -Sc", false),
         _ => ("pacman -Sc", true),
     };
-    let _ = utils::run_cmd_terminal(String::from(cmd), escalate);
+    let _ = utils::run_cmd_terminal(callback, String::from(cmd), escalate);
 }
 
-pub fn reinstall_packages() {
-    let _ = utils::run_cmd_terminal(String::from("pacman -S $(pacman -Qnq)"), true);
+pub fn reinstall_packages(callback: RunCmdCallback) {
+    let _ = utils::run_cmd_terminal(callback, String::from("pacman -S $(pacman -Qnq)"), true);
 }
 
-pub fn remove_orphans(dialog_tx: Sender<DialogMessage>) {
+pub fn remove_orphans(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage>) {
     // check if you have orphans packages.
     let mut orphan_pkgs = Exec::cmd("/sbin/pacman")
         .arg("-Qtdq")
@@ -183,10 +183,10 @@ pub fn remove_orphans(dialog_tx: Sender<DialogMessage>) {
             .expect("Couldn't send data to channel");
         return;
     }
-    let _ = utils::run_cmd_terminal(format!("pacman -Rns {orphan_pkgs}"), true);
+    let _ = utils::run_cmd_terminal(callback, format!("pacman -Rns {orphan_pkgs}"), true);
 }
 
-pub fn reset_keyring() {
+pub fn reset_keyring(callback: RunCmdCallback) {
     let key_reset = r#"
 rm -rf /etc/pacman.d/gnupg/ && \
 pacman-key --init && pacman-key --populate && \
@@ -194,10 +194,11 @@ pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com && \
 pacman-key --lsign-key F3B607488DB35A47
 "#;
 
-    let _ = utils::run_cmd_terminal(key_reset.into(), true);
+    let _ = utils::run_cmd_terminal(callback, key_reset.into(), true);
 }
 
 pub fn install_needed_packages(
+    callback: RunCmdCallback,
     package_names: &[&str],
     dialog_msg: String,
     dialog_action: Action,
@@ -223,16 +224,17 @@ pub fn install_needed_packages(
 
     // install overwise
     let packages = packages_to_install.join(" ");
-    let _ = utils::run_cmd_terminal(format!("pacman -S {packages}"), true);
+    let _ = utils::run_cmd_terminal(callback, format!("pacman -S {packages}"), true);
 }
 
-pub fn rankmirrors() {
-    let _ = utils::run_cmd_terminal(String::from("cachyos-rate-mirrors"), true);
+pub fn rankmirrors(callback: RunCmdCallback) {
+    let _ = utils::run_cmd_terminal(callback, String::from("cachyos-rate-mirrors"), true);
 }
 
-pub fn install_gaming(dialog_tx: Sender<DialogMessage>) {
+pub fn install_gaming(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage>) {
     const ALPM_PACKAGE_NAMES: [&str; 2] = ["cachyos-gaming-meta", "cachyos-gaming-applications"];
     install_needed_packages(
+        callback,
         &ALPM_PACKAGE_NAMES,
         fl!("gaming-package-installed"),
         Action::InstallGaming,
@@ -240,8 +242,9 @@ pub fn install_gaming(dialog_tx: Sender<DialogMessage>) {
     );
 }
 
-pub fn install_snapper(dialog_tx: Sender<DialogMessage>) {
+pub fn install_snapper(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage>) {
     install_needed_packages(
+        callback,
         &["cachyos-snapper-support"],
         fl!("snapper-package-installed"),
         Action::InstallSnapper,
@@ -249,8 +252,9 @@ pub fn install_snapper(dialog_tx: Sender<DialogMessage>) {
     );
 }
 
-pub fn install_spoofdpi(dialog_tx: Sender<DialogMessage>) {
+pub fn install_spoofdpi(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage>) {
     install_needed_packages(
+        callback,
         &["spoofdpi"],
         fl!("spoof-dpi-package-installed"),
         Action::InstallSpoofDpi,

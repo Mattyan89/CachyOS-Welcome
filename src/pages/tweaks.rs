@@ -1,14 +1,14 @@
-use crate::pages::MessageType;
 use crate::systemd_units::SystemdUnits;
+use crate::ui::{MessageType, UI};
 use crate::{fl, systemd_units, utils};
 
-use std::boxed::Box;
+use std::str;
 use std::sync::Mutex;
 
 use gtk::prelude::*;
 
+use glib::translate::FromGlib;
 use gtk::glib;
-use gtk::glib::translate::FromGlib;
 use once_cell::sync::Lazy;
 use subprocess::Exec;
 use tokio::runtime::Runtime;
@@ -175,7 +175,11 @@ fn toggle_service(
     std::thread::spawn(move || {
         if !alpm_package_name.is_empty() {
             if !utils::is_alpm_pkg_installed(&alpm_package_name) {
-                let _ = utils::run_cmd_terminal(format!("pacman -S {alpm_package_name}"), true);
+                let _ = utils::run_cmd_terminal(
+                    crate::gui::run_command,
+                    format!("pacman -S {alpm_package_name}"),
+                    true,
+                );
             }
             if !utils::is_alpm_pkg_installed(&alpm_package_name) {
                 tx.send(false).expect("Couldn't send data to channel");
@@ -195,12 +199,8 @@ fn toggle_service(
         if !msg {
             callback(msg);
 
-            utils::show_simple_dialog(
-                &widget_window,
-                MessageType::Error,
-                &dialog_text,
-                MessageType::Error.to_string(),
-            );
+            let ui_comp = crate::gui::GUI::new(widget_window.clone());
+            ui_comp.show_message(MessageType::Error, &dialog_text, "Error".to_string());
         }
         glib::ControlFlow::Continue
     });

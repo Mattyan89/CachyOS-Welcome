@@ -1,31 +1,13 @@
-use crate::{actions, create_gtk_button, fl, utils};
+use crate::ui::UI;
+use crate::{actions, create_gtk_button, dns, fl, utils};
 
 use gtk::prelude::*;
 
 use gtk::{glib, Builder};
-use phf::phf_ordered_map;
-
-static G_DNS_SERVERS: phf::OrderedMap<&'static str, (&'static str, &'static str)> = phf_ordered_map! {
-    "AdGuard" => ("94.140.14.14,94.140.15.15", "2a10:50c0::ad1:ff,2a10:50c0::ad2:ff"),
-    "AdGuard Family Protection" => ("94.140.14.15,94.140.15.16", "2a10:50c0::bad1:ff,2a10:50c0::bad2:ff"),
-    "Cloudflare" => ("1.1.1.1,1.0.0.1", "2606:4700:4700::1111,2606:4700:4700::1001"),
-    "Cloudflare Malware blocking" => ("1.1.1.2,1.0.0.2", "2606:4700:4700::1112,2606:4700:4700::1002"),
-    "Cloudflare Malware and adult content blocking" => ("1.1.1.3,1.0.0.3", "2606:4700:4700::1113,2606:4700:4700::1003"),
-    "Cisco Umbrella(OpenDNS)" => ("208.67.222.222,208.67.220.220", "2620:119:35::35,2620:119:53::53"),
-    "DNS.Watch" => ("84.200.69.80,84.200.70.40", "2001:1608:10:25::1c04:b12f,2001:1608:10:25::9249:d69b"),
-    "GCore" => ("95.85.95.85,2.56.220.2", "2a03:90c0:999d::1,2a03:90c0:9992::1"),
-    "Google" => ("8.8.8.8,8.8.4.4", "2001:4860:4860::8888,2001:4860:4860::8844"),
-    "Quad9" => ("9.9.9.9,149.112.112.112", "2620:fe::fe,2620:fe::9"),
-    "Yandex" => ("77.88.8.8,77.88.8.1", "2a02:6b8::feed:0ff,2a02:6b8:0:1::feed:0ff"),
-    "Yandex Malware blocking" => ("77.88.8.88,77.88.8.2", "2a02:6b8::feed:bad,2a02:6b8:0:1::feed:bad"),
-    "Yandex Malware and adult content blocking" => ("77.88.8.7,77.88.8.3", "2a02:6b8::feed:a11,2a02:6b8:0:1::feed:a11"),
-    "阿里云公共DNS (AliDNS)" => ("223.5.5.5,223.6.6.6", "2400:3200::1,2400:3200:baba::1"),
-    "腾讯云 DNSPod (Tencent)" => ("119.29.29.29,119.28.28.28", "2402:4e00::,2402:4e00:1::")
-};
 
 fn selection_index_for_connection(conn_name: &str) -> usize {
     if let Some((ipv4_dns, ipv6_dns)) = actions::get_dns_for_connection(conn_name) {
-        for (key_index, (_name, (ipv4_map, ipv6_map))) in G_DNS_SERVERS.entries().enumerate() {
+        for (key_index, (_name, (ipv4_map, ipv6_map))) in dns::G_DNS_SERVERS.entries().enumerate() {
             if (!ipv4_dns.is_empty() && &ipv4_dns == ipv4_map)
                 || (!ipv6_dns.is_empty() && &ipv6_dns == ipv6_map)
             {
@@ -35,7 +17,7 @@ fn selection_index_for_connection(conn_name: &str) -> usize {
     }
 
     // fallback to Cloudflare
-    G_DNS_SERVERS.get_index("Cloudflare").unwrap()
+    dns::G_DNS_SERVERS.get_index("Cloudflare").unwrap()
 }
 
 fn create_connections_section() -> gtk::Box {
@@ -69,7 +51,7 @@ fn create_connections_section() -> gtk::Box {
     };
     let combo_servers = {
         let store = gtk::ListStore::new(&[String::static_type()]);
-        for dns_server in G_DNS_SERVERS.keys() {
+        for dns_server in dns::G_DNS_SERVERS.keys() {
             store.set(&store.append(), &[(0, dns_server)]);
         }
         utils::create_combo_with_model(&store)
@@ -141,7 +123,7 @@ fn create_connections_section() -> gtk::Box {
                 "".into()
             }
         };
-        let server_addr = G_DNS_SERVERS.get(&server_name).unwrap();
+        let server_addr = dns::G_DNS_SERVERS.get(&server_name).unwrap();
         std::thread::spawn(move || {
             actions::change_dns_server(&conn_name, server_addr.0, server_addr.1, dialog_tx_clone);
         });
@@ -171,8 +153,9 @@ fn create_connections_section() -> gtk::Box {
         let widget_obj = &apply_btn_clone;
         let widget_window =
             utils::get_window_from_widget(widget_obj).expect("Failed to retrieve window");
+        let ui_comp = crate::gui::GUI::new(widget_window);
 
-        utils::show_simple_dialog(&widget_window, msg.msg_type, &msg.msg, msg.msg_type.to_string());
+        ui_comp.show_message(msg.msg_type, &msg.msg, msg.msg_type.to_string());
         glib::ControlFlow::Continue
     });
 

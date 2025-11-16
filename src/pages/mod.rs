@@ -2,10 +2,11 @@ pub mod dns;
 pub mod i18n;
 mod tweaks;
 
-use crate::{actions, fl, utils};
+use crate::ui::{Action, UI};
+use crate::{actions, create_gtk_button, fl, utils};
 
-use std::fmt;
 use std::path::Path;
+use std::str;
 
 use gtk::prelude::*;
 
@@ -21,40 +22,6 @@ macro_rules! create_gtk_button {
         temp_btn.set_widget_name($message_id);
         temp_btn
     }};
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum MessageType {
-    Info,
-    Warning,
-    Error,
-}
-impl fmt::Display for MessageType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let type_str = match self {
-            MessageType::Info => "INFO",
-            MessageType::Warning => "WARNING",
-            MessageType::Error => "ERROR",
-        };
-        write!(f, "{type_str}")
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct DialogMessage {
-    pub msg: String,
-    pub msg_type: MessageType,
-    pub action: Action,
-}
-
-#[derive(Clone, Debug)]
-pub enum Action {
-    RemoveLock,
-    RemoveOrphans,
-    SetDnsServer,
-    InstallGaming,
-    InstallSnapper,
-    InstallSpoofDpi,
 }
 
 fn create_fixes_section(builder: &Builder) -> gtk::Box {
@@ -97,7 +64,7 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
     reinstall_btn.connect_clicked(move |_| {
         // Spawn child process in separate thread.
         std::thread::spawn(move || {
-            actions::reinstall_packages();
+            actions::reinstall_packages(crate::gui::run_command);
         });
     });
     resetkeyring_btn.connect_clicked(on_resetkeyring_btn_clicked);
@@ -106,35 +73,35 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
         // Spawn child process in separate thread.
         let dialog_tx_clone = dialog_tx.clone();
         std::thread::spawn(move || {
-            actions::remove_orphans(dialog_tx_clone);
+            actions::remove_orphans(crate::gui::run_command, dialog_tx_clone);
         });
     });
     clear_pkgcache_btn.connect_clicked(on_clear_pkgcache_btn_clicked);
     rankmirrors_btn.connect_clicked(move |_| {
         // Spawn child process in separate thread.
         std::thread::spawn(move || {
-            actions::rankmirrors();
+            actions::rankmirrors(crate::gui::run_command);
         });
     });
     install_gaming_btn.connect_clicked(move |_| {
         // Spawn child process in separate thread.
         let dialog_tx_gaming = dialog_tx_gaming.clone();
         std::thread::spawn(move || {
-            actions::install_gaming(dialog_tx_gaming);
+            actions::install_gaming(crate::gui::run_command, dialog_tx_gaming);
         });
     });
     install_snapper_btn.connect_clicked(move |_| {
         // Spawn child process in separate thread.
         let dialog_tx_snapper = dialog_tx_snapper.clone();
         std::thread::spawn(move || {
-            actions::install_snapper(dialog_tx_snapper);
+            actions::install_snapper(crate::gui::run_command, dialog_tx_snapper);
         });
     });
     install_spoof_dpi_btn.connect_clicked(move |_| {
         // Spawn child process in separate thread.
         let dialog_tx_spoof = dialog_tx_spoof.clone();
         std::thread::spawn(move || {
-            actions::install_spoofdpi(dialog_tx_spoof);
+            actions::install_spoofdpi(crate::gui::run_command, dialog_tx_spoof);
         });
     });
 
@@ -155,8 +122,9 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
         };
         let widget_window =
             utils::get_window_from_widget(widget_obj).expect("Failed to retrieve window");
+        let ui_comp = crate::gui::GUI::new(widget_window);
 
-        utils::show_simple_dialog(&widget_window, msg.msg_type, &msg.msg, msg.msg_type.to_string());
+        ui_comp.show_message(msg.msg_type, &msg.msg, msg.msg_type.to_string());
         glib::ControlFlow::Continue
     });
 
@@ -326,21 +294,21 @@ pub fn create_appbrowser_page(builder: &Builder) {
 fn on_resetkeyring_btn_clicked(_: &gtk::Button) {
     // Spawn child process in separate thread.
     std::thread::spawn(move || {
-        actions::reset_keyring();
+        actions::reset_keyring(crate::gui::run_command);
     });
 }
 
 fn on_update_system_btn_clicked(_: &gtk::Button) {
     // Spawn child process in separate thread.
     std::thread::spawn(move || {
-        actions::update_system();
+        actions::update_system(crate::gui::run_command);
     });
 }
 
 fn on_clear_pkgcache_btn_clicked(_: &gtk::Button) {
     // Spawn child process in separate thread.
     std::thread::spawn(move || {
-        actions::clear_pkgcache();
+        actions::clear_pkgcache(crate::gui::run_command);
     });
 }
 

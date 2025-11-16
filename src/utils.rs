@@ -1,4 +1,4 @@
-use crate::pages::MessageType;
+use crate::ui::RunCmdCallback;
 
 use std::fs::File;
 use std::path::Path;
@@ -106,20 +106,8 @@ pub fn get_translation_msgid(objname: &str) -> &'static str {
     }
 }
 
-pub fn run_cmd_terminal(cmd: String, escalate: bool) -> bool {
-    let cmd_formated = format!("{cmd}; read -p 'Press enter to exit'");
-    let mut args: Vec<&str> = vec![];
-    if escalate {
-        args.extend_from_slice(&["-s", "pkexec /usr/share/cachyos-hello/scripts/rootshell.sh"]);
-    }
-    args.push(cmd_formated.as_str());
-
-    let exit_status = Exec::cmd("/usr/share/cachyos-hello/scripts/terminal-helper")
-        .args(args.as_slice())
-        .stdout(Redirection::Pipe)
-        .join()
-        .unwrap();
-    exit_status.success()
+pub fn run_cmd_terminal(callback: RunCmdCallback, cmd: String, escalate: bool) -> bool {
+    callback(&cmd, escalate)
 }
 
 pub fn run_cmd(cmd: String, escalate: bool) -> anyhow::Result<ExitStatus> {
@@ -160,35 +148,6 @@ pub fn is_root_on_btrfs() -> bool {
         .stdout_str();
 
     root_fs == "btrfs\n"
-}
-
-pub fn show_simple_dialog(
-    widget_window: &gtk::Window,
-    message_type: MessageType,
-    dialog_text: &String,
-    dialog_title: String,
-) {
-    let dialog_msg_type = match message_type {
-        MessageType::Info => gtk::MessageType::Info,
-        MessageType::Warning => gtk::MessageType::Warning,
-        MessageType::Error => gtk::MessageType::Error,
-    };
-
-    let dialog = gtk::MessageDialog::builder()
-        .transient_for(widget_window)
-        .message_type(dialog_msg_type)
-        .text(dialog_text)
-        .title(dialog_title)
-        .modal(true)
-        .buttons(gtk::ButtonsType::Ok)
-        .build();
-    dialog.connect_response(|dialog, _| dialog.close());
-
-    dialog.show();
-    // block until user responds
-    dialog.run();
-    // we are required to close/hide manually according to the docs
-    dialog.close();
 }
 
 #[cfg(test)]
