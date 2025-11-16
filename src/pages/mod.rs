@@ -143,12 +143,14 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
     let remove_orphans_btn_clone = remove_orphans_btn.clone();
     let install_gaming_btn_clone = install_gaming_btn.clone();
     let install_snapper_btn_clone = install_snapper_btn.clone();
+    let install_spoof_dpi_btn_clone = install_spoof_dpi_btn.clone();
     dialog_rx.attach(None, move |msg| {
         let widget_obj = match msg.action {
             Action::RemoveLock => &removelock_btn_clone,
             Action::RemoveOrphans => &remove_orphans_btn_clone,
             Action::InstallGaming => &install_gaming_btn_clone,
             Action::InstallSnapper => &install_snapper_btn_clone,
+            Action::InstallSpoofDpi => &install_spoof_dpi_btn_clone,
             _ => panic!("Unexpected action!!"),
         };
         let widget_window =

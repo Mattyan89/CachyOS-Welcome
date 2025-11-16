@@ -253,7 +253,7 @@ pub fn install_spoofdpi(dialog_tx: Sender<DialogMessage>) {
     install_needed_packages(
         &["spoofdpi"],
         fl!("spoof-dpi-package-installed"),
-        Action::InstallSnapper,
+        Action::InstallSpoofDpi,
         dialog_tx,
     );
 }
