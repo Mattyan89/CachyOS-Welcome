@@ -10,7 +10,6 @@ use gtk::prelude::*;
 use glib::translate::FromGlib;
 use gtk::glib;
 use once_cell::sync::Lazy;
-use subprocess::Exec;
 use tokio::runtime::Runtime;
 use tracing::error;
 
@@ -152,17 +151,7 @@ fn toggle_service(
 
     let action_enabled =
         action_data.split(' ').all(|x| units_handle.enabled_units.contains(&x.to_owned()));
-    let cmd = if !action_enabled {
-        if action_type == "user_service" {
-            format!("systemctl --user enable --now --force {action_data}")
-        } else {
-            format!("/sbin/pkexec bash -c \"systemctl enable --now --force {action_data}\"")
-        }
-    } else if action_type == "user_service" {
-        format!("systemctl --user disable --now {action_data}")
-    } else {
-        format!("/sbin/pkexec bash -c \"systemctl disable --now {action_data}\"")
-    };
+    let (cmd, run_as_root) = get_tweak_toggle_cmd(action_type, action_data, action_enabled);
 
     // Create context channel.
     let (tx, rx) = glib::MainContext::channel(glib::Priority::default());
@@ -186,7 +175,7 @@ fn toggle_service(
                 return;
             }
         }
-        Exec::shell(cmd).join().unwrap();
+        utils::run_cmd(cmd, run_as_root).unwrap();
 
         if action_type == "user_service" {
             load_global_enabled_units();
@@ -244,5 +233,23 @@ where
     let sighandle_id = passed_btn.connect_clicked(callback);
     unsafe {
         passed_btn.set_data("signalHandle", sighandle_id.as_raw());
+    }
+}
+
+fn get_tweak_toggle_cmd(
+    action_type: &str,
+    action_data: &str,
+    action_enabled: bool,
+) -> (String, bool) {
+    if !action_enabled {
+        if action_type == "user_service" {
+            (format!("systemctl --user enable --now --force {action_data}"), false)
+        } else {
+            (format!("systemctl enable --now --force {action_data}"), true)
+        }
+    } else if action_type == "user_service" {
+        (format!("systemctl --user disable --now {action_data}"), false)
+    } else {
+        (format!("systemctl disable --now {action_data}"), true)
     }
 }
