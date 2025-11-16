@@ -92,45 +92,28 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
     rankmirrors_btn.connect_clicked(move |_| {
         // Spawn child process in separate thread.
         std::thread::spawn(move || {
-            let _ = utils::run_cmd_terminal(String::from("cachyos-rate-mirrors"), true);
+            actions::rankmirrors();
         });
     });
     install_gaming_btn.connect_clicked(move |_| {
         // Spawn child process in separate thread.
         let dialog_tx_gaming = dialog_tx_gaming.clone();
         std::thread::spawn(move || {
-            const ALPM_PACKAGE_NAMES: [&str; 2] =
-                ["cachyos-gaming-meta", "cachyos-gaming-applications"];
-            actions::install_needed_packages(
-                &ALPM_PACKAGE_NAMES,
-                fl!("gaming-package-installed"),
-                Action::InstallGaming,
-                dialog_tx_gaming,
-            );
+            actions::install_gaming(dialog_tx_gaming);
         });
     });
     install_snapper_btn.connect_clicked(move |_| {
         // Spawn child process in separate thread.
         let dialog_tx_snapper = dialog_tx_snapper.clone();
         std::thread::spawn(move || {
-            actions::install_needed_packages(
-                &["cachyos-snapper-support"],
-                fl!("snapper-package-installed"),
-                Action::InstallSnapper,
-                dialog_tx_snapper,
-            );
+            actions::install_snapper(dialog_tx_snapper);
         });
     });
     install_spoof_dpi_btn.connect_clicked(move |_| {
         // Spawn child process in separate thread.
         let dialog_tx_spoof = dialog_tx_spoof.clone();
         std::thread::spawn(move || {
-            actions::install_needed_packages(
-                &["spoofdpi"],
-                fl!("spoof-dpi-package-installed"),
-                Action::InstallSnapper,
-                dialog_tx_spoof,
-            );
+            actions::install_spoofdpi(dialog_tx_spoof);
         });
     });
 

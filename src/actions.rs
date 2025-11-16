@@ -1,7 +1,6 @@
 use crate::pages::{Action, DialogMessage};
 use crate::{fl, kwin_dbus, utils, PacmanWrapper};
 
-use std::fmt::Write;
 use std::path::Path;
 
 use gtk::glib::Sender;
@@ -225,4 +224,36 @@ pub fn install_needed_packages(
     // install overwise
     let packages = packages_to_install.join(" ");
     let _ = utils::run_cmd_terminal(format!("pacman -S {packages}"), true);
+}
+
+pub fn rankmirrors() {
+    let _ = utils::run_cmd_terminal(String::from("cachyos-rate-mirrors"), true);
+}
+
+pub fn install_gaming(dialog_tx: Sender<DialogMessage>) {
+    const ALPM_PACKAGE_NAMES: [&str; 2] = ["cachyos-gaming-meta", "cachyos-gaming-applications"];
+    install_needed_packages(
+        &ALPM_PACKAGE_NAMES,
+        fl!("gaming-package-installed"),
+        Action::InstallGaming,
+        dialog_tx,
+    );
+}
+
+pub fn install_snapper(dialog_tx: Sender<DialogMessage>) {
+    install_needed_packages(
+        &["cachyos-snapper-support"],
+        fl!("snapper-package-installed"),
+        Action::InstallSnapper,
+        dialog_tx,
+    );
+}
+
+pub fn install_spoofdpi(dialog_tx: Sender<DialogMessage>) {
+    install_needed_packages(
+        &["spoofdpi"],
+        fl!("spoof-dpi-package-installed"),
+        Action::InstallSnapper,
+        dialog_tx,
+    );
 }
