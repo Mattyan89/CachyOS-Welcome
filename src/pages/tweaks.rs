@@ -1,3 +1,4 @@
+use crate::pages::MessageType;
 use crate::systemd_units::SystemdUnits;
 use crate::{fl, systemd_units, utils};
 
@@ -196,9 +197,9 @@ fn toggle_service(
 
             utils::show_simple_dialog(
                 &widget_window,
-                gtk::MessageType::Error,
+                MessageType::Error,
                 &dialog_text,
-                "Error".to_string(),
+                MessageType::Error.to_string(),
             );
         }
         glib::ControlFlow::Continue

@@ -1,3 +1,5 @@
+use crate::pages::MessageType;
+
 use std::fs::File;
 use std::path::Path;
 use std::{fs, slice, str};
@@ -162,10 +164,16 @@ pub fn is_root_on_btrfs() -> bool {
 
 pub fn show_simple_dialog(
     widget_window: &gtk::Window,
-    dialog_msg_type: gtk::MessageType,
+    message_type: MessageType,
     dialog_text: &String,
     dialog_title: String,
 ) {
+    let dialog_msg_type = match message_type {
+        MessageType::Info => gtk::MessageType::Info,
+        MessageType::Warning => gtk::MessageType::Warning,
+        MessageType::Error => gtk::MessageType::Error,
+    };
+
     let dialog = gtk::MessageDialog::builder()
         .transient_for(widget_window)
         .message_type(dialog_msg_type)

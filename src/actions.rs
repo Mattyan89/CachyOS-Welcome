@@ -1,4 +1,4 @@
-use crate::pages::{Action, DialogMessage};
+use crate::pages::{Action, DialogMessage, MessageType};
 use crate::{fl, kwin_dbus, utils, PacmanWrapper};
 
 use std::path::Path;
@@ -73,7 +73,7 @@ pub fn change_dns_server(
         dialog_tx
             .send(DialogMessage {
                 msg: fl!("dns-server-changed"),
-                msg_type: gtk::MessageType::Info,
+                msg_type: MessageType::Info,
                 action: Action::SetDnsServer,
             })
             .expect("Couldn't send data to channel");
@@ -81,7 +81,7 @@ pub fn change_dns_server(
         dialog_tx
             .send(DialogMessage {
                 msg: fl!("dns-server-failed"),
-                msg_type: gtk::MessageType::Error,
+                msg_type: MessageType::Error,
                 action: Action::SetDnsServer,
             })
             .expect("Couldn't send data to channel");
@@ -101,7 +101,7 @@ pub fn reset_dns_server(conn_name: &str, dialog_tx: Sender<DialogMessage>) {
         dialog_tx
             .send(DialogMessage {
                 msg: fl!("dns-server-reset"),
-                msg_type: gtk::MessageType::Info,
+                msg_type: MessageType::Info,
                 action: Action::SetDnsServer,
             })
             .expect("Couldn't send data to channel");
@@ -109,7 +109,7 @@ pub fn reset_dns_server(conn_name: &str, dialog_tx: Sender<DialogMessage>) {
         dialog_tx
             .send(DialogMessage {
                 msg: fl!("dns-server-reset-failed"),
-                msg_type: gtk::MessageType::Error,
+                msg_type: MessageType::Error,
                 action: Action::SetDnsServer,
             })
             .expect("Couldn't send data to channel");
@@ -123,7 +123,7 @@ pub fn remove_dblock(dialog_tx: Sender<DialogMessage>) {
             dialog_tx
                 .send(DialogMessage {
                     msg: fl!("removed-db-lock"),
-                    msg_type: gtk::MessageType::Info,
+                    msg_type: MessageType::Info,
                     action: Action::RemoveLock,
                 })
                 .expect("Couldn't send data to channel");
@@ -132,7 +132,7 @@ pub fn remove_dblock(dialog_tx: Sender<DialogMessage>) {
         dialog_tx
             .send(DialogMessage {
                 msg: fl!("lock-doesnt-exist"),
-                msg_type: gtk::MessageType::Info,
+                msg_type: MessageType::Info,
                 action: Action::RemoveLock,
             })
             .expect("Couldn't send data to channel");
@@ -177,7 +177,7 @@ pub fn remove_orphans(dialog_tx: Sender<DialogMessage>) {
         dialog_tx
             .send(DialogMessage {
                 msg: fl!("orphans-not-found"),
-                msg_type: gtk::MessageType::Info,
+                msg_type: MessageType::Info,
                 action: Action::RemoveOrphans,
             })
             .expect("Couldn't send data to channel");
@@ -214,7 +214,7 @@ pub fn install_needed_packages(
         dialog_tx
             .send(DialogMessage {
                 msg: dialog_msg,
-                msg_type: gtk::MessageType::Info,
+                msg_type: MessageType::Info,
                 action: dialog_action,
             })
             .expect("Couldn't send data to channel");

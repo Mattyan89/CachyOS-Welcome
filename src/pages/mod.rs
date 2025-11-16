@@ -4,6 +4,7 @@ mod tweaks;
 
 use crate::{actions, fl, utils};
 
+use std::fmt;
 use std::path::Path;
 
 use gtk::prelude::*;
@@ -22,18 +23,38 @@ macro_rules! create_gtk_button {
     }};
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum MessageType {
+    Info,
+    Warning,
+    Error,
+}
+impl fmt::Display for MessageType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let type_str = match self {
+            MessageType::Info => "INFO",
+            MessageType::Warning => "WARNING",
+            MessageType::Error => "ERROR",
+        };
+        write!(f, "{type_str}")
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct DialogMessage {
     pub msg: String,
-    pub msg_type: gtk::MessageType,
+    pub msg_type: MessageType,
     pub action: Action,
 }
 
+#[derive(Clone, Debug)]
 pub enum Action {
     RemoveLock,
     RemoveOrphans,
     SetDnsServer,
     InstallGaming,
     InstallSnapper,
+    InstallSpoofDpi,
 }
 
 fn create_fixes_section(builder: &Builder) -> gtk::Box {

@@ -1,3 +1,4 @@
+use crate::pages::MessageType;
 use crate::{check_regular_file, fl, utils, G_HELLO_WINDOW};
 
 use std::fs;
@@ -27,7 +28,7 @@ fn outdated_version_check(window: &gtk::Window, message: String) -> bool {
     if version_tag.contains("testing") {
         utils::show_simple_dialog(
             window,
-            gtk::MessageType::Warning,
+            MessageType::Warning,
             &fl!("testing-iso-warning"),
             message.clone(),
         );
@@ -39,7 +40,7 @@ fn outdated_version_check(window: &gtk::Window, message: String) -> bool {
     if response.is_err() {
         utils::show_simple_dialog(
             window,
-            gtk::MessageType::Warning,
+            MessageType::Warning,
             &fl!("offline-error"),
             message.clone(),
         );
@@ -59,7 +60,7 @@ fn outdated_version_check(window: &gtk::Window, message: String) -> bool {
     if version_tag != latest_version {
         utils::show_simple_dialog(
             window,
-            gtk::MessageType::Warning,
+            MessageType::Warning,
             &fl!("outdated-version-warning"),
             message.clone(),
         );
@@ -85,7 +86,7 @@ fn edition_compat_check(window: &gtk::Window, message: String) -> bool {
         {
             utils::show_simple_dialog(
                 window,
-                gtk::MessageType::Warning,
+                MessageType::Warning,
                 &fl!("unsupported-hw-warning"),
                 message.clone(),
             );
@@ -126,7 +127,7 @@ fn connectivity_check(window: &gtk::Window, message: String) -> bool {
     }
 
     // All connectivity checks failed
-    utils::show_simple_dialog(window, gtk::MessageType::Error, &fl!("offline-error"), message);
+    utils::show_simple_dialog(window, MessageType::Error, &fl!("offline-error"), message);
     false
 }
 
