@@ -181,21 +181,11 @@ fn toggle_tweak_cli(tweak: TweakName, enable: bool) -> Result<()> {
         }
     }
 
-    let action = if enable { "enable --now" } else { "disable --now" };
-    let cmd = if action_type == "user_service" {
-        format!("systemctl --user {} {}", action, action_data)
-    } else {
-        format!("systemctl {} {}", action, action_data)
-    };
+    let (cmd, run_as_root) = utils::get_tweak_toggle_cmd(action_type, action_data, !enable);
 
     println!("> {}", cmd.cyan());
-    let exit_status =
-        Exec::shell(&cmd).stdout(Redirection::None).stderr(Redirection::None).join()?;
-
-    if exit_status.success() {
-        let status = if enable { "enabled".green() } else { "disabled".yellow() };
-        println!("Tweak '{:?}' successfully {}.", tweak, status);
-    } else {
+    let exit_status = utils::run_cmd(cmd, run_as_root).unwrap();
+    if !exit_status.success() {
         anyhow::bail!(
             "Failed to {} tweak '{:?}'. Command exited with error.",
             verb.to_lowercase(),
@@ -203,6 +193,8 @@ fn toggle_tweak_cli(tweak: TweakName, enable: bool) -> Result<()> {
         );
     }
 
+    let status = if enable { "enabled".green() } else { "disabled".red() };
+    println!("Tweak '{:?}' successfully {}.", tweak, status);
     Ok(())
 }
 
