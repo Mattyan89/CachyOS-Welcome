@@ -1,4 +1,5 @@
 use crate::systemd_units::SystemdUnits;
+use crate::tweak::{self, TweakName};
 use crate::ui::{MessageType, UI};
 use crate::{fl, systemd_units, utils};
 
@@ -15,13 +16,15 @@ use tracing::error;
 
 #[macro_export]
 macro_rules! create_tweak_checkbox {
-    ($tweak_msg:literal,$action_data:literal,$action_type:literal,$alpm_pkg_name:literal) => {{
+    ($tweak_msg:literal,$tweak_name:expr) => {{
         let temp_btn =
             gtk::CheckButton::with_label(&fl!("tweak-enabled-title", tweak = $tweak_msg));
         temp_btn.set_widget_name($tweak_msg);
 
-        set_tweak_check_data(&temp_btn, $action_data, $action_type, $alpm_pkg_name);
-        connect_tweak(&temp_btn, $action_data);
+        set_tweak_check_data(&temp_btn, $tweak_name);
+
+        let (_, action_data, _) = tweak::get_details($tweak_name);
+        connect_tweak(&temp_btn, action_data);
         temp_btn
     }};
 }
@@ -61,16 +64,9 @@ pub(crate) fn load_global_enabled_units() {
     }
 }
 
-fn set_tweak_check_data(
-    check_btn: &gtk::CheckButton,
-    action_data: &'static str,
-    action_type: &'static str,
-    alpm_package_name: &'static str,
-) {
+fn set_tweak_check_data(check_btn: &gtk::CheckButton, tweak_name: TweakName) {
     unsafe {
-        check_btn.set_data("actionData", action_data);
-        check_btn.set_data("actionType", action_type);
-        check_btn.set_data("alpmPackage", alpm_package_name);
+        check_btn.set_data("tweakName", tweak_name);
     }
 }
 
@@ -93,26 +89,12 @@ pub(crate) fn create_options_section() -> gtk::Box {
     label.set_justify(gtk::Justification::Center);
     label.set_text(&fl!("tweaks"));
 
-    let psd_btn = create_tweak_checkbox!(
-        "Profile-sync-daemon",
-        "psd.service",
-        "user_service",
-        "profile-sync-daemon"
-    );
-    let systemd_oomd_btn =
-        create_tweak_checkbox!("Systemd-oomd", "systemd-oomd.service", "service", "");
-    let bpftune_btn =
-        create_tweak_checkbox!("Bpftune", "bpftune.service", "service", "bpftune-git");
-    let bluetooth_btn =
-        create_tweak_checkbox!("Bluetooth", "bluetooth.service", "service", "bluez");
-    let ananicy_cpp_btn =
-        create_tweak_checkbox!("Ananicy Cpp", "ananicy-cpp.service", "service", "ananicy-cpp");
-    let cachy_update_btn = create_tweak_checkbox!(
-        "Cachy Update",
-        "arch-update.timer arch-update-tray.service",
-        "user_service",
-        "cachy-update"
-    );
+    let psd_btn = create_tweak_checkbox!("Profile-sync-daemon", TweakName::Psd);
+    let systemd_oomd_btn = create_tweak_checkbox!("Systemd-oomd", TweakName::Oomd);
+    let bpftune_btn = create_tweak_checkbox!("Bpftune", TweakName::Bpftune);
+    let bluetooth_btn = create_tweak_checkbox!("Bluetooth", TweakName::Bluetooth);
+    let ananicy_cpp_btn = create_tweak_checkbox!("Ananicy Cpp", TweakName::Ananicy);
+    let cachy_update_btn = create_tweak_checkbox!("Cachy Update", TweakName::CachyUpdate);
 
     // set tooltips
     psd_btn.set_tooltip_text(Some(&fl!("tweak-psd-tooltip")));
@@ -139,12 +121,11 @@ pub(crate) fn create_options_section() -> gtk::Box {
 }
 
 fn toggle_service(
-    action_type: &str,
-    action_data: &str,
-    alpm_package_name: &str,
+    tweak_name: TweakName,
     widget_window: gtk::Window,
     callback: std::boxed::Box<dyn Fn(bool)>,
 ) {
+    let (action_type, action_data, alpm_package_name) = tweak::get_details(tweak_name);
     let units_handle = if action_type == "user_service" { &G_GLOBAL_UNITS } else { &G_LOCAL_UNITS }
         .lock()
         .unwrap();
@@ -197,24 +178,18 @@ fn toggle_service(
 
 fn on_servbtn_clicked(button: &gtk::CheckButton) {
     // Get action data/type.
-    let action_type: &str;
-    let action_data: &str;
-    let alpm_package_name: &str;
+    let tweak_name: TweakName;
     let signal_handler: u64;
     unsafe {
-        action_type = *button.data("actionType").unwrap().as_ptr();
-        action_data = *button.data("actionData").unwrap().as_ptr();
-        alpm_package_name = *button.data("alpmPackage").unwrap().as_ptr();
+        tweak_name = *button.data("tweakName").unwrap().as_ptr();
         signal_handler = *button.data("signalHandle").unwrap().as_ptr();
     }
 
     let widget_window = utils::get_window_from_widget(button).expect("Failed to retrieve window");
-
     let button_sh = button.clone();
+
     toggle_service(
-        action_type,
-        action_data,
-        alpm_package_name,
+        tweak_name,
         widget_window,
         Box::new(move |msg| {
             let sighandle_id_obj =

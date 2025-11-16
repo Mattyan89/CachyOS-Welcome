@@ -1,5 +1,6 @@
-use crate::cli::{AppToLaunch, FixAction, TweakAction, TweakName};
+use crate::cli::{AppToLaunch, FixAction, TweakAction};
 use crate::dns::DnsAction;
+use crate::tweak::{self, TweakName};
 use crate::ui::UI;
 use crate::{actions, dns, systemd_units, utils};
 
@@ -9,7 +10,7 @@ use anyhow::Result;
 use colored::*;
 use gtk::glib;
 
-use subprocess::{Exec, Redirection};
+use subprocess::Exec;
 use tokio::runtime::Runtime;
 
 pub fn handle_fix_command(action: FixAction) -> Result<()> {
@@ -146,21 +147,8 @@ pub fn handle_launch_command(app: AppToLaunch) -> Result<()> {
     Ok(())
 }
 
-fn get_tweak_details(tweak: TweakName) -> (&'static str, &'static str, &'static str) {
-    match tweak {
-        TweakName::Psd => ("user_service", "psd.service", "profile-sync-daemon"),
-        TweakName::Oomd => ("service", "systemd-oomd.service", ""),
-        TweakName::Bpftune => ("service", "bpftune.service", "bpftune-git"),
-        TweakName::Bluetooth => ("service", "bluetooth.service", "bluez"),
-        TweakName::Ananicy => ("service", "ananicy-cpp.service", "ananicy-cpp"),
-        TweakName::CachyUpdate => {
-            ("user_service", "arch-update.timer arch-update-tray.service", "cachy-update")
-        },
-    }
-}
-
 fn toggle_tweak_cli(tweak: TweakName, enable: bool) -> Result<()> {
-    let (action_type, action_data, alpm_package_name) = get_tweak_details(tweak);
+    let (action_type, action_data, alpm_package_name) = tweak::get_details(tweak);
 
     let verb = if enable { "Enabling" } else { "Disabling" };
     println!("{} tweak '{:?}'...", verb, tweak);
@@ -222,7 +210,7 @@ fn list_tweaks() -> Result<()> {
         TweakName::Ananicy,
         TweakName::CachyUpdate,
     ] {
-        let (_, service_names, _) = get_tweak_details(*tweak);
+        let (_, service_names, _) = tweak::get_details(*tweak);
         let is_enabled = service_names.split_whitespace().all(|s| enabled_units.contains(s));
 
         let status = if is_enabled { "[enabled]".green() } else { "[disabled]".red() };

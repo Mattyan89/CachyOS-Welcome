@@ -1,5 +1,5 @@
 use crate::ui::{MessageType, UI};
-use crate::{dns, utils};
+use crate::{dns, tweak, utils};
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
@@ -92,33 +92,16 @@ pub enum TweakAction {
     Enable {
         /// The tweak to enable.
         #[clap(value_enum)]
-        tweak_name: TweakName,
+        tweak_name: tweak::TweakName,
     },
     /// Disable a specific tweak (stops and disables a systemd service/timer)
     Disable {
         /// The tweak to disable.
         #[clap(value_enum)]
-        tweak_name: TweakName,
+        tweak_name: tweak::TweakName,
     },
     /// List available tweaks and their current status
     List,
-}
-
-#[derive(Debug, Clone, Copy, ValueEnum)]
-pub enum TweakName {
-    /// Profile Sync Daemon
-    Psd,
-    /// Systemd OOMD service
-    Oomd,
-    /// BPFtune service
-    Bpftune,
-    /// Bluetooth service
-    Bluetooth,
-    /// Ananicy Cpp service
-    Ananicy,
-    /// CachyOS update notifier
-    #[clap(name = "cachy-update")]
-    CachyUpdate,
 }
 
 #[derive(Args, Debug)]

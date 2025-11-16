@@ -15,6 +15,7 @@ mod localization;
 mod logger;
 mod pages;
 mod systemd_units;
+mod tweak;
 mod ui;
 mod utils;
 mod window;
