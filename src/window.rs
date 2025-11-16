@@ -158,7 +158,7 @@ impl HelloWindow {
             pages::create_tweaks_page(&builder);
 
             if Path::new("/usr/bin/nmcli").exists() {
-                pages::create_dnsconnections_page(&builder);
+                pages::dns::create_connections_page(&builder);
             }
         }
 
@@ -277,7 +277,7 @@ impl HelloWindow {
             label.set_markup(get_page(file_path.as_ref()).as_str());
         }
 
-        pages::update_translations(&self.builder);
+        pages::i18n::update_translations(&self.builder);
     }
 
     pub fn set_autostart(&self, autostart: bool) {
