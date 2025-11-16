@@ -2,6 +2,8 @@
 #![allow(clippy::arc_with_non_send_sync)]
 
 mod actions;
+mod cli;
+mod cli_handler;
 mod config;
 mod dns;
 mod embed_data;
@@ -28,6 +30,7 @@ use std::sync::{Arc, Mutex};
 use gtk::gio::prelude::*;
 use gtk::prelude::*;
 
+use clap::Parser;
 use gtk::glib;
 use i18n_embed::DesktopLanguageRequester;
 use once_cell::sync::Lazy;
@@ -82,26 +85,34 @@ fn main() {
         error!("Error while loading languages for library_fluent {error}");
     }
 
-    // Register UI.
-    gtk::init().expect("Unable to start GTK3.");
+    if std::env::args().len() > 1 {
+        // Parse arguments and run CLI logic
+        let cli_args = cli::Cli::parse();
+        if let Err(e) = run_cli(cli_args) {
+            eprintln!("Error: {}", e);
+        }
+    } else {
+        // Register UI.
+        gtk::init().expect("Unable to start GTK3.");
 
-    gresource::init().expect("Could not load gresource file.");
+        gresource::init().expect("Could not load gresource file.");
 
-    // Set program name.
-    glib::set_program_name("CachyOSHello".into());
-    glib::set_application_name("CachyOSHello");
+        // Set program name.
+        glib::set_program_name("CachyOSHello".into());
+        glib::set_application_name("CachyOSHello");
 
-    let application = gtk::Application::new(
-        Some(APP_ID),       // Application id
-        Default::default(), // Using default flags
-    );
+        let application = gtk::Application::new(
+            Some(APP_ID),       // Application id
+            Default::default(), // Using default flags
+        );
 
-    application.connect_activate(|application| {
-        build_ui(application);
-    });
+        application.connect_activate(|application| {
+            build_ui(application);
+        });
 
-    // Run the application and start the event loop
-    application.run();
+        // Run the application and start the event loop
+        application.run();
+    }
 }
 
 fn build_ui(application: &gtk::Application) {
@@ -250,4 +261,13 @@ fn on_delete_window(_param: &[glib::Value]) -> Option<glib::Value> {
     write_json(preferences.as_str().unwrap(), saved_json);
 
     Some(false.to_value())
+}
+
+fn run_cli(cli: cli::Cli) -> anyhow::Result<()> {
+    match cli.command {
+        cli::Commands::Fix(args) => cli_handler::handle_fix_command(args.action),
+        cli::Commands::Tweak(args) => cli_handler::handle_tweak_command(args.action),
+        cli::Commands::Dns(args) => cli_handler::handle_dns_command(args.action),
+        cli::Commands::Launch(args) => cli_handler::handle_launch_command(args.app),
+    }
 }

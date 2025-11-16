@@ -1,3 +1,4 @@
+use clap::{Subcommand, ValueEnum};
 use phf::phf_ordered_map;
 
 pub static G_DNS_SERVERS: phf::OrderedMap<&'static str, (&'static str, &'static str)> = phf_ordered_map! {
@@ -18,19 +19,22 @@ pub static G_DNS_SERVERS: phf::OrderedMap<&'static str, (&'static str, &'static 
     "腾讯云 DNSPod (Tencent)" => ("119.29.29.29,119.28.28.28", "2402:4e00::,2402:4e00:1::")
 };
 
-#[derive(Debug)]
+#[derive(Subcommand, Debug)]
 pub enum DnsAction {
     /// Set a DNS provider for a network connection
     Set {
         /// Network connection name (use 'list-connections' to see available)
+        #[clap(short, long, value_name = "NAME")]
         connection: String,
 
         /// DNS provider to use (use 'list-servers' to see available)
+        #[clap(short, long, value_enum)]
         server: DnsServer,
     },
     /// Reset DNS settings for a network connection to automatic (DHCP)
     Reset {
         /// Network connection name to reset
+        #[clap(short, long, value_name = "NAME")]
         connection: String,
     },
     /// List available network connections managed by NetworkManager
@@ -39,7 +43,7 @@ pub enum DnsAction {
     ListServers,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum DnsServer {
     AdGuard,
     AdGuardFamily,

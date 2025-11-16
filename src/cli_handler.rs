@@ -1,0 +1,242 @@
+use crate::cli::{AppToLaunch, FixAction, TweakAction, TweakName};
+use crate::dns::DnsAction;
+use crate::ui::UI;
+use crate::{actions, dns, systemd_units, utils};
+
+use std::collections::HashSet;
+
+use anyhow::Result;
+use colored::*;
+use gtk::glib;
+
+use subprocess::{Exec, Redirection};
+use tokio::runtime::Runtime;
+
+pub fn handle_fix_command(action: FixAction) -> Result<()> {
+    let (tx, rx) = glib::MainContext::channel(glib::Priority::default());
+
+    match action {
+        FixAction::UpdateSystem => {
+            println!("{}", "Updating system...".bold());
+            actions::update_system(crate::cli::run_command);
+        },
+        FixAction::ReinstallPackages => {
+            println!("{}", "Reinstalling all native packages...".bold());
+            actions::reinstall_packages(crate::cli::run_command);
+        },
+        FixAction::ResetKeyrings => {
+            println!("{}", "Resetting pacman keyrings...".bold());
+            actions::reset_keyring(crate::cli::run_command);
+        },
+        FixAction::RemoveLock => {
+            println!("{}", "Removing pacman database lock...".bold());
+            let tx_clone = tx.clone();
+            std::thread::spawn(move || {
+                actions::remove_dblock(tx_clone);
+            });
+        },
+        FixAction::ClearCache => {
+            println!("{}", "Clearing package cache...".bold());
+            actions::clear_pkgcache(crate::cli::run_command);
+        },
+        FixAction::RemoveOrphans => {
+            println!("{}", "Removing orphan packages...".bold());
+            let tx_clone = tx.clone();
+            std::thread::spawn(move || {
+                actions::remove_orphans(crate::cli::run_command, tx_clone);
+            });
+        },
+        FixAction::RankMirrors => {
+            println!("{}", "Ranking mirrors...".bold());
+            actions::rankmirrors(crate::cli::run_command);
+        },
+        FixAction::InstallGaming => {
+            println!("{}", "Installing CachyOS gaming packages...".bold());
+            actions::install_gaming(crate::cli::run_command, tx);
+        },
+        FixAction::InstallSnapper => {
+            if !utils::is_root_on_btrfs() {
+                anyhow::bail!("Snapper requires a BTRFS root filesystem.");
+            }
+            println!("{}", "Installing Snapper support...".bold());
+            actions::install_snapper(crate::cli::run_command, tx);
+        },
+        FixAction::InstallSpoofDpi => {
+            println!("{}", "Installing spoof-dpi...".bold());
+            actions::install_spoofdpi(crate::cli::run_command, tx);
+        },
+        FixAction::ShowKwinDebug => {
+            println!("{}", "Attempting to launch KWin debug console...".bold());
+            actions::launch_kwin_debug_window();
+        },
+    }
+
+    rx.attach(None, move |msg| {
+        let ui_comp = crate::cli::CLI::new();
+        ui_comp.show_message(msg.msg_type, &msg.msg, msg.msg_type.to_string());
+        glib::ControlFlow::Continue
+    });
+    Ok(())
+}
+
+pub fn handle_tweak_command(action: TweakAction) -> Result<()> {
+    match action {
+        TweakAction::Enable { tweak_name } => toggle_tweak_cli(tweak_name, true),
+        TweakAction::Disable { tweak_name } => toggle_tweak_cli(tweak_name, false),
+        TweakAction::List => list_tweaks(),
+    }
+}
+
+pub fn handle_dns_command(action: DnsAction) -> Result<()> {
+    let (tx, rx) = glib::MainContext::channel(glib::Priority::default());
+
+    match action {
+        DnsAction::Set { connection, server } => {
+            println!("Setting DNS for '{}' to '{}'...", connection.cyan(), server.as_str().cyan());
+            let server_addr = dns::G_DNS_SERVERS.get(server.as_str()).unwrap();
+            actions::change_dns_server(&connection, server_addr.0, server_addr.1, tx);
+        },
+        DnsAction::Reset { connection } => {
+            println!("Resetting DNS for '{}' to automatic...", connection.cyan());
+            actions::reset_dns_server(&connection, tx);
+        },
+        DnsAction::ListConnections => {
+            println!("{}", "Available Network Connections:".bold());
+            let connections = actions::get_nm_connections();
+            if connections.is_empty() {
+                println!("No connections found.");
+            } else {
+                for conn in connections {
+                    println!("- {}", conn);
+                }
+            }
+        },
+        DnsAction::ListServers => {
+            println!("{}", "Available DNS Servers:".bold());
+            for name in dns::G_DNS_SERVERS.keys() {
+                println!("- {}", name);
+            }
+        },
+    }
+    rx.attach(None, move |msg| {
+        let ui_comp = crate::cli::CLI::new();
+        ui_comp.show_message(msg.msg_type, &msg.msg, msg.msg_type.to_string());
+        glib::ControlFlow::Continue
+    });
+    Ok(())
+}
+
+pub fn handle_launch_command(app: AppToLaunch) -> Result<()> {
+    let (app_name, bin_name) = match app {
+        AppToLaunch::PackageInstaller => ("CachyOS Package Installer", "cachyos-pi"),
+        AppToLaunch::KernelManager => ("CachyOS Kernel Manager", "cachyos-kernel-manager"),
+    };
+
+    println!("Launching {}...", app_name.bold());
+
+    match which::which(bin_name) {
+        Ok(path) => {
+            Exec::cmd(path).detached().join()?;
+            println!("{} launched successfully.", app_name);
+        },
+        Err(_) => {
+            anyhow::bail!("'{}' executable not found in your PATH.", bin_name);
+        },
+    }
+    Ok(())
+}
+
+fn get_tweak_details(tweak: TweakName) -> (&'static str, &'static str, &'static str) {
+    match tweak {
+        TweakName::Psd => ("user_service", "psd.service", "profile-sync-daemon"),
+        TweakName::Oomd => ("service", "systemd-oomd.service", ""),
+        TweakName::Bpftune => ("service", "bpftune.service", "bpftune-git"),
+        TweakName::Bluetooth => ("service", "bluetooth.service", "bluez"),
+        TweakName::Ananicy => ("service", "ananicy-cpp.service", "ananicy-cpp"),
+        TweakName::CachyUpdate => {
+            ("user_service", "arch-update.timer arch-update-tray.service", "cachy-update")
+        },
+    }
+}
+
+fn toggle_tweak_cli(tweak: TweakName, enable: bool) -> Result<()> {
+    let (action_type, action_data, alpm_package_name) = get_tweak_details(tweak);
+
+    let verb = if enable { "Enabling" } else { "Disabling" };
+    println!("{} tweak '{:?}'...", verb, tweak);
+
+    // If enabling, ensure package is installed first
+    if enable && !alpm_package_name.is_empty() && !utils::is_alpm_pkg_installed(alpm_package_name) {
+        println!(
+            "Required package '{}' is not installed. Installing...",
+            alpm_package_name.yellow()
+        );
+        let status =
+            crate::cli::run_command(&format!("pacman -S --noconfirm {alpm_package_name}"), true);
+        if !status || !utils::is_alpm_pkg_installed(alpm_package_name) {
+            anyhow::bail!(
+                "Failed to install required package '{}'. Cannot enable tweak.",
+                alpm_package_name
+            );
+        }
+    }
+
+    let action = if enable { "enable --now" } else { "disable --now" };
+    let cmd = if action_type == "user_service" {
+        format!("systemctl --user {} {}", action, action_data)
+    } else {
+        format!("systemctl {} {}", action, action_data)
+    };
+
+    println!("> {}", cmd.cyan());
+    let exit_status =
+        Exec::shell(&cmd).stdout(Redirection::None).stderr(Redirection::None).join()?;
+
+    if exit_status.success() {
+        let status = if enable { "enabled".green() } else { "disabled".yellow() };
+        println!("Tweak '{:?}' successfully {}.", tweak, status);
+    } else {
+        anyhow::bail!(
+            "Failed to {} tweak '{:?}'. Command exited with error.",
+            verb.to_lowercase(),
+            tweak
+        );
+    }
+
+    Ok(())
+}
+
+fn list_tweaks() -> Result<()> {
+    println!("{}", "Available Tweaks Status:".bold());
+
+    // Get all enabled units
+    let rt = Runtime::new()?;
+    let enabled_units: HashSet<String> = rt.block_on(async {
+        let mut units = HashSet::new();
+        if let Ok(system_units) = systemd_units::get_enabled_global_units().await {
+            units.extend(system_units);
+        }
+        if let Ok(user_units) = systemd_units::get_enabled_user_units().await {
+            units.extend(user_units);
+        }
+        units
+    });
+
+    for tweak in &[
+        TweakName::Psd,
+        TweakName::Oomd,
+        TweakName::Bpftune,
+        TweakName::Bluetooth,
+        TweakName::Ananicy,
+        TweakName::CachyUpdate,
+    ] {
+        let (_, service_names, _) = get_tweak_details(*tweak);
+        let is_enabled = service_names.split_whitespace().all(|s| enabled_units.contains(s));
+
+        let status = if is_enabled { "[enabled]".green() } else { "[disabled]".red() };
+
+        println!("- {:<12} {}", format!("{:?}", tweak), status);
+    }
+
+    Ok(())
+}
