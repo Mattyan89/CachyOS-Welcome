@@ -4,7 +4,7 @@ use std::{fs, slice, str};
 
 use gtk::prelude::*;
 
-use subprocess::{Exec, Redirection};
+use subprocess::{Exec, ExitStatus, Redirection};
 
 #[derive(Debug)]
 pub enum PacmanWrapper {
@@ -118,6 +118,14 @@ pub fn run_cmd_terminal(cmd: String, escalate: bool) -> bool {
         .join()
         .unwrap();
     exit_status.success()
+}
+
+pub fn run_cmd(cmd: String, escalate: bool) -> anyhow::Result<ExitStatus> {
+    if escalate {
+        Ok(Exec::cmd("/sbin/pkexec").arg("bash").arg("-c").arg(cmd).join()?)
+    } else {
+        Ok(Exec::cmd("/sbin/bash").arg("-c").arg(cmd).join()?)
+    }
 }
 
 #[inline]

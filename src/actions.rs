@@ -62,15 +62,14 @@ pub fn change_dns_server(
     server_addr_ipv6: &str,
     dialog_tx: Sender<DialogMessage>,
 ) {
-    let status_code = Exec::cmd("/sbin/pkexec")
-        .arg("bash")
-        .arg("-c")
-        .arg(format!(
+    let status_code = utils::run_cmd(
+        format!(
             "nmcli con mod '{conn_name}' ipv4.dns '{server_addr_ipv4}' && nmcli con mod \
              '{conn_name}' ipv6.dns '{server_addr_ipv6}' && systemctl restart NetworkManager"
-        ))
-        .join()
-        .unwrap();
+        ),
+        true,
+    )
+    .unwrap();
     if status_code.success() {
         dialog_tx
             .send(DialogMessage {
@@ -91,15 +90,14 @@ pub fn change_dns_server(
 }
 
 pub fn reset_dns_server(conn_name: &str, dialog_tx: Sender<DialogMessage>) {
-    let status_code = Exec::cmd("/sbin/pkexec")
-        .arg("bash")
-        .arg("-c")
-        .arg(format!(
+    let status_code = utils::run_cmd(
+        format!(
             "nmcli con mod '{conn_name}' ipv4.dns '' && nmcli con mod '{conn_name}' ipv6.dns '' \
              && systemctl restart NetworkManager"
-        ))
-        .join()
-        .unwrap();
+        ),
+        true,
+    )
+    .unwrap();
     if status_code.success() {
         dialog_tx
             .send(DialogMessage {
@@ -121,12 +119,7 @@ pub fn reset_dns_server(conn_name: &str, dialog_tx: Sender<DialogMessage>) {
 
 pub fn remove_dblock(dialog_tx: Sender<DialogMessage>) {
     if Path::new("/var/lib/pacman/db.lck").exists() {
-        let _ = Exec::cmd("/sbin/pkexec")
-            .arg("bash")
-            .arg("-c")
-            .arg("rm /var/lib/pacman/db.lck")
-            .join()
-            .unwrap();
+        let _ = utils::run_cmd("rm /var/lib/pacman/db.lck".into(), true).unwrap();
         if !Path::new("/var/lib/pacman/db.lck").exists() {
             dialog_tx
                 .send(DialogMessage {
