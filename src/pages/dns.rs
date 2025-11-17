@@ -51,7 +51,7 @@ fn create_connections_section() -> gtk::Box {
     };
     let combo_servers = {
         let store = gtk::ListStore::new(&[String::static_type()]);
-        for dns_server in dns::G_DNS_SERVERS.keys() {
+        for dns_server in dns::G_DNS_SERVERS.keys().into_iter() {
             store.set(&store.append(), &[(0, dns_server)]);
         }
         utils::create_combo_with_model(&store)
@@ -63,7 +63,7 @@ fn create_connections_section() -> gtk::Box {
     // preset the current active connection
     if let Some(active_conn_name) = actions::get_active_connection_name() {
         let model = combo_conn.model().unwrap();
-        if let Some(iter) = utils::find_iter_in_model(model, active_conn_name) {
+        if let Some(iter) = utils::find_iter_in_model(&model, &active_conn_name) {
             combo_conn.set_active_iter(Some(&iter));
 
             let selected_dns_index = selection_index_for_connection(&active_conn_name);
@@ -74,13 +74,8 @@ fn create_connections_section() -> gtk::Box {
     // select used dns option value on connection change
     let combo_servers_clone = combo_servers.clone();
     combo_conn.connect_changed(move |combo| {
-        let conn_name = if let Some(tree_iter) = combo.active_iter() {
-            let model = combo.model().unwrap();
-            model.value(&tree_iter, 0).get::<String>().unwrap()
-        } else {
-            // use empty string which will trigger fallback
-            "".to_owned()
-        };
+        // use empty string which will trigger fallback
+        let conn_name: String = combo.active_text().map(Into::into).unwrap_or_default();
 
         let selected_dns_index = selection_index_for_connection(&conn_name);
         combo_servers_clone.set_active(Some(selected_dns_index as u32));
@@ -94,28 +89,12 @@ fn create_connections_section() -> gtk::Box {
     let combo_conn_clone = combo_conn.clone();
     let combo_serv_clone = combo_servers.clone();
     apply_btn.connect_clicked(move |_| {
-        let dialog_tx_clone = dialog_tx_clone.clone();
-        let conn_name = {
-            if let Some(tree_iter) = combo_conn_clone.active_iter() {
-                let model = combo_conn_clone.model().unwrap();
-                let group_gobj = model.value(&tree_iter, 0);
-                let group = group_gobj.get::<&str>().unwrap();
-                String::from(group)
-            } else {
-                "".into()
-            }
-        };
-        let server_name = {
-            if let Some(tree_iter) = combo_serv_clone.active_iter() {
-                let model = combo_serv_clone.model().unwrap();
-                let group_gobj = model.value(&tree_iter, 0);
-                let group = group_gobj.get::<&str>().unwrap();
-                String::from(group)
-            } else {
-                "".into()
-            }
-        };
+        let conn_name: String = combo_conn_clone.active_text().map(Into::into).unwrap_or_default();
+        let server_name: String =
+            combo_serv_clone.active_text().map(Into::into).unwrap_or_default();
         let server_addr = dns::G_DNS_SERVERS.get(&server_name).unwrap();
+
+        let dialog_tx_clone = dialog_tx_clone.clone();
         std::thread::spawn(move || {
             actions::change_dns_server(&conn_name, server_addr.0, server_addr.1, dialog_tx_clone);
         });
@@ -124,16 +103,7 @@ fn create_connections_section() -> gtk::Box {
     let combo_conn_clone = combo_conn.clone();
     reset_btn.connect_clicked(move |_| {
         let dialog_tx_clone = dialog_tx_clone.clone();
-        let conn_name = {
-            if let Some(tree_iter) = combo_conn_clone.active_iter() {
-                let model = combo_conn_clone.model().unwrap();
-                let group_gobj = model.value(&tree_iter, 0);
-                let group = group_gobj.get::<&str>().unwrap();
-                String::from(group)
-            } else {
-                "".into()
-            }
-        };
+        let conn_name: String = combo_conn_clone.active_text().map(Into::into).unwrap_or_default();
         std::thread::spawn(move || {
             actions::reset_dns_server(&conn_name, dialog_tx_clone);
         });
