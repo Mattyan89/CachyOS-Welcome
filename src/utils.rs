@@ -70,6 +70,27 @@ pub fn check_regular_file(path: &str) -> bool {
     }
 }
 
+pub fn find_iter_in_model(
+    model: &impl IsA<gtk::TreeModel>,
+    search_text: &str,
+) -> Option<gtk::TreeIter> {
+    if let Some(iter) = model.iter_first() {
+        loop {
+            if let Ok(value) = model.value(&iter, 0).get::<String>() {
+                if value == search_text {
+                    return Some(iter);
+                }
+            }
+
+            if !model.iter_next(&iter) {
+                break;
+            }
+        }
+    }
+
+    None
+}
+
 pub fn create_combo_with_model(group_store: &gtk::ListStore) -> gtk::ComboBox {
     let group_combo = gtk::ComboBox::with_model(group_store);
     let combo_renderer = gtk::CellRendererText::new();

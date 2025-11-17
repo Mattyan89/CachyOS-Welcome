@@ -63,19 +63,11 @@ fn create_connections_section() -> gtk::Box {
     // preset the current active connection
     if let Some(active_conn_name) = actions::get_active_connection_name() {
         let model = combo_conn.model().unwrap();
-        if let Some(iter) = model.iter_first() {
-            loop {
-                if model.value(&iter, 0).get::<String>().unwrap() == active_conn_name {
-                    combo_conn.set_active_iter(Some(&iter));
+        if let Some(iter) = utils::find_iter_in_model(model, active_conn_name) {
+            combo_conn.set_active_iter(Some(&iter));
 
-                    let selected_dns_index = selection_index_for_connection(&active_conn_name);
-                    combo_servers.set_active(Some(selected_dns_index as u32));
-                    break;
-                }
-                if !model.iter_next(&iter) {
-                    break;
-                }
-            }
+            let selected_dns_index = selection_index_for_connection(&active_conn_name);
+            combo_servers.set_active(Some(selected_dns_index as u32));
         }
     }
 
