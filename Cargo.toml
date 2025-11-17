@@ -31,7 +31,7 @@ tracing-appender = "0.2"
 which = { version = "8.0", features = ["tracing"] }
 
 anyhow = { version = "1", default-features = false, features = ["std"] }
-tokio = { version = "1.47", features = ["macros", "sync", "rt-multi-thread"] }
+tokio = { version = "1.48", features = ["macros", "sync", "rt-multi-thread"] }
 zbus = { version = "5", features = ["tokio"], default-features = false }
 zbus_systemd = { version = "0.25800.0", features = ["systemd1"], default-features = false }
 clap = { features = ["derive"], version = "4" }
