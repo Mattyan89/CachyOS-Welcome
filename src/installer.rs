@@ -52,6 +52,16 @@ fn outdated_version_check(ui: &GUI, message: String) -> bool {
     .trim()
     .to_owned();
 
+    // in most cases it should be just date number (YYMMDD)
+    let parsed_ver = version_tag.parse::<u32>();
+    let parsed_latestver = latest_version.parse::<u32>();
+    if parsed_ver.is_ok() && parsed_latestver.is_ok() {
+        if parsed_ver.unwrap() > parsed_latestver.unwrap() {
+            ui.show_message(MessageType::Warning, &fl!("testing-iso-warning"), message.clone());
+            return true;
+        }
+    }
+
     if version_tag != latest_version {
         ui.show_message(MessageType::Warning, &fl!("outdated-version-warning"), message.clone());
     }
