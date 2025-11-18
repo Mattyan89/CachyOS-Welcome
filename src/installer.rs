@@ -1,6 +1,6 @@
 use crate::gui::GUI;
 use crate::ui::{MessageType, UI};
-use crate::{check_regular_file, fl, utils, G_HELLO_WINDOW};
+use crate::{check_regular_file, fl, G_HELLO_WINDOW};
 
 use std::fs;
 use std::io::{BufRead, BufReader};
@@ -32,18 +32,22 @@ fn outdated_version_check(ui: &GUI, message: String) -> bool {
     }
 
     let response = reqwest::blocking::get("https://cachyos.org/versions.json");
-
     if response.is_err() {
         ui.show_message(MessageType::Warning, &fl!("offline-error"), message.clone());
         return false;
     }
 
-    let versions = response.unwrap().json::<Versions>().unwrap();
+    // silently continue in case of server error
+    let versions = response.map(|x| x.json::<Versions>().unwrap());
+    if let Err(vers_err) = versions {
+        error!("Failed to fetch versions.json: {vers_err}");
+        return true;
+    }
 
     let latest_version = if edition_tag.contains("desktop") {
-        versions.desktop_iso_version
+        versions.unwrap().desktop_iso_version
     } else {
-        versions.handheld_iso_version
+        versions.unwrap().handheld_iso_version
     }
     .trim()
     .to_owned();
@@ -99,11 +103,9 @@ fn connectivity_check(ui: &GUI, message: String) -> bool {
     ];
     for target in targets {
         let ping_result = Exec::cmd("/sbin/ping").args(&["-c", "1", "-W", "3", target]).join();
-        if let Ok(status) = ping_result {
-            if status.success() {
-                info!("Connectivity confirmed via ping to {target}");
-                return true;
-            }
+        if ping_result.map(|x| x.success()).is_ok() {
+            info!("Connectivity confirmed via ping to {target}");
+            return true;
         }
     }
 

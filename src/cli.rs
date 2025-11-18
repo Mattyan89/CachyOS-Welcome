@@ -1,7 +1,7 @@
 use crate::ui::{MessageType, UI};
 use crate::{dns, tweak, utils};
 
-use clap::{Args, Parser, Subcommand, ValueEnum};
+use clap::{Args, Parser, Subcommand};
 
 pub struct CLI;
 
