@@ -32,9 +32,7 @@ pub fn handle_fix_command(action: FixAction) -> Result<()> {
         FixAction::RemoveLock => {
             println!("{}", "Removing pacman database lock...".bold());
             let tx_clone = tx.clone();
-            std::thread::spawn(move || {
-                actions::remove_dblock(tx_clone);
-            });
+            actions::remove_dblock(tx_clone);
         },
         FixAction::ClearCache => {
             println!("{}", "Clearing package cache...".bold());
@@ -43,9 +41,7 @@ pub fn handle_fix_command(action: FixAction) -> Result<()> {
         FixAction::RemoveOrphans => {
             println!("{}", "Removing orphan packages...".bold());
             let tx_clone = tx.clone();
-            std::thread::spawn(move || {
-                actions::remove_orphans(crate::cli::run_command, tx_clone);
-            });
+            actions::remove_orphans(crate::cli::run_command, tx_clone);
         },
         FixAction::RankMirrors => {
             println!("{}", "Ranking mirrors...".bold());
