@@ -294,6 +294,7 @@ We, the CachyOS Developers, hope that you will enjoy using CachyOS as much as we
                       <item id="es">Español</item>
                       <item id="et">Eesti</item>
                       <item id="fr">Français</item>
+                      <item id="he">עברית‎</item>
                       <item id="hu">Magyar</item>
                       <item id="it">Italiano</item>
                       <item id="nl">Nederlands</item>
@@ -303,6 +304,7 @@ We, the CachyOS Developers, hope that you will enjoy using CachyOS as much as we
                       <item id="sk">Slovenčina</item>
                       <item id="sv">Svenska</item>
                       <item id="tr">Türkçe</item>
+                      <item id="vi">tiếng Việt</item>
                       <item id="zh-CN">简体中文</item>
                     </items>
                     <signal name="changed" handler="on_languages_changed" swapped="no"/>
