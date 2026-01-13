@@ -6,9 +6,9 @@ license = "GPLv3"
 edition = "2021"
 
 [dependencies]
-alpm = { default-features = false, version = "4" }
-alpm-utils = { features = ["conf"], default-features = false, version = "4" }
-pacmanconf = "3"
+alpm = { default-features = false, version = "5" }
+alpm-utils = { features = ["conf"], default-features = false, version = "5" }
+pacmanconf = "3.1"
 
 subprocess = "0.2"
 once_cell = { default-features = false, version = "1.21" }
@@ -21,7 +21,7 @@ gdk-pixbuf = "0.21"
 glib = { default-features = false, version = "0.21" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-reqwest = { version = "0.12", features = ["blocking", "json"] }
+reqwest = { version = "0.13", features = ["blocking", "json"] }
 unic-langid = "0.9"
 phf = { version = "0.13", features = ["macros"], default-features = false }
 chwd = { git = "https://github.com/CachyOS/chwd", rev = "595312b31e6dd355c9a8fcd09acde24b7f9c3e3b", version = "1.16.1" }
@@ -31,9 +31,9 @@ tracing-appender = "0.2"
 which = { version = "8.0", features = ["tracing"] }
 
 anyhow = { version = "1", default-features = false, features = ["std"] }
-tokio = { version = "1.48", features = ["macros", "sync", "rt-multi-thread"] }
+tokio = { version = "1.49", features = ["macros", "sync", "rt-multi-thread"] }
 zbus = { version = "5", features = ["tokio"], default-features = false }
-zbus_systemd = { version = "0.25800.0", features = ["systemd1"], default-features = false }
+zbus_systemd = { version = "0.25900.0", features = ["systemd1"], default-features = false }
 clap = { features = ["derive"], version = "4" }
 colored = "3"
 
