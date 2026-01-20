@@ -190,7 +190,7 @@ pub fn get_tweak_toggle_cmd(
         format!("systemctl {sysaction} {action_data}")
     };
 
-    (cmd, run_as_root)
+    (cmd, false)
 }
 
 #[cfg(test)]
