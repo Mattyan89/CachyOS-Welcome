@@ -75,14 +75,12 @@ fn connect_tweak(check_btn: &gtk::CheckButton, action_data: &'static str) {
     let global_guard = G_GLOBAL_UNITS.lock().unwrap();
 
     let is_enabled = action_data.split_whitespace().all(|unit| {
-        local_guard.enabled_units.contains(&unit.to_string()) ||
-        global_guard.enabled_units.contains(&unit.to_string())
+        local_guard.enabled_units.contains(&unit.to_string())
+            || global_guard.enabled_units.contains(&unit.to_string())
     });
 
-    if is_enabled {
-        check_btn.set_active(true);
-    }
-    
+    check_btn.set_active(is_enabled);
+
     connect_clicked_and_save(check_btn, on_servbtn_clicked);
 }
 
