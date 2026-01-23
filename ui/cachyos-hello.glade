@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.40.0
 
-Copyright (C) 2021-2025 CachyOS team
+Copyright (C) 2021-2026 CachyOS team
 
 This file is part of cachyos-welcome.
 
@@ -24,7 +24,7 @@ along with cachyos-welcome.  If not, see <http://www.gnu.org/licenses/>.
   <!-- interface-css-provider-path style.css -->
   <!-- interface-license-type gplv3 -->
   <!-- interface-name cachyos-welcome -->
-  <!-- interface-copyright 2021-2025 CachyOS team -->
+  <!-- interface-copyright 2021-2026 CachyOS team -->
   <object class="GtkImage" id="abouticon">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
@@ -297,6 +297,7 @@ We, the CachyOS Developers, hope that you will enjoy using CachyOS as much as we
                       <item id="he">עברית‎</item>
                       <item id="hu">Magyar</item>
                       <item id="it">Italiano</item>
+                      <item id="nb">Norsk Bokmål</item>
                       <item id="nl">Nederlands</item>
                       <item id="pl">Polski</item>
                       <item id="pt-BR">Português Brasileiro</item>
