@@ -187,7 +187,7 @@ impl HelloWindow {
         ])
         // Translators: Replace "translator-credits" with your names. Put a comma between.
         .translator_credits("translator-credits")
-        .copyright("2021-2025 CachyOS team")
+        .copyright("2021-2026 CachyOS team")
         .license_type(gtk::License::Gpl30)
         .website("https://github.com/cachyos/cachyos-welcome")
         .website_label("GitHub")
