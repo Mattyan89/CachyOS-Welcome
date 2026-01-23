@@ -11,7 +11,6 @@ lock-doesnt-exist = Databaslås för Pacman finns inte!
 orphans-not-found = Inga föräldralösa paket hittades!
 package-not-installed = Paketet '{$package_name}' har inte installerats!
 gaming-package-installed = Spelpaket redan installerade!
-spoof-dpi-package-installed = SpoofDPI är redan installerat!
 snapper-package-installed = Paketet 'cachyos-snapper-support' är redan installerat!
 
 # Application Browser page
@@ -50,7 +49,6 @@ dnsserver-title = Byt DNS-server
 show-kwinw-debug-title = Visa kwin(Wayland) felsökningsfönster
 install-gaming-title = Installera spelpaket
 install-snapper-title = Installera stöd för Snapper
-install-spoof-dpi-title = Installera SpoofDPI
 
 # Main Page (buttons)
 button-about-tooltip = Om

@@ -11,7 +11,6 @@ lock-doesnt-exist = Bllokimi i databazës së Pacman nuk ekziston!
 orphans-not-found = Nuk u gjetën paketa të jetime (orphans)!
 package-not-installed = Paketa '{$package_name}' nuk është instaluar!
 gaming-package-installed = Paketat për lojëra janë të instaluara tashmë!
-spoof-dpi-package-installed = SpoofDPI është i instaluar tashmë!
 snapper-package-installed = Paketa 'cachyos-snapper-support' është instaluar tashmë!
 
 # Application Browser page
@@ -56,7 +55,6 @@ dnsserver-title = Ndrysho serverin DNS
 show-kwinw-debug-title = Shfaq dritaren debug të kwin (Wayland)
 install-gaming-title = Instalo paketat për lojëra
 install-snapper-title = Instalo përkrahje për Snapper
-install-spoof-dpi-title = Instalo SpoofDPI
 
 # Main Page (buttons)
 button-about-tooltip = Rreth

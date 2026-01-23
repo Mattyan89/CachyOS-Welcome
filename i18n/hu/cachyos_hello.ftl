@@ -11,7 +11,6 @@ lock-doesnt-exist = A Pacman adatbázis zárolása nem létezik!
 orphans-not-found = Nem találhatók árva csomagok!
 package-not-installed = A(z) „{$package_name}” csomag nem lett telepítve!
 gaming-package-installed = A játékcsomagok már telepítve vannak!
-spoof-dpi-package-installed = A SpoofDPI már telepítve van!
 snapper-package-installed = A „cachyos-snapper-support” csomag már telepítve van!
 
 # Application Browser page
@@ -57,7 +56,6 @@ dnsserver-title = DNS szerver megváltoztatása
 show-kwinw-debug-title = KWin (Wayland) hibakereső ablak megjelenítése
 install-gaming-title = Játékcsomagok telepítése
 install-snapper-title = Snapper támogatás telepítése
-install-spoof-dpi-title = SpoofDPI telepítése
 
 # Main Page (buttons)
 button-about-tooltip = Névjegy

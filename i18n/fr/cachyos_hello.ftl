@@ -1,5 +1,5 @@
 # About dialog
-about-dialog-title = CachyOS Hello 
+about-dialog-title = CachyOS Hello
 about-dialog-comments = Application de bienvenue pour CachyOS
 
 # Tweaks page
@@ -11,7 +11,6 @@ lock-doesnt-exist = Le verrou de la base de données Pacman n'existe pas !
 orphans-not-found = Aucun paquet orphelin trouvé !
 package-not-installed = Le paquet '{$package_name}' n'a pas été installé !
 gaming-package-installed = Paquets de Gaming déjà installés !
-spoof-dpi-package-installed = SpoofDPI est déjà installé !
 snapper-package-installed = Le paquet 'cachyos-snapper-support' est déjà installé !
 
 # Application Browser page
@@ -50,7 +49,6 @@ dnsserver-title = Changer le serveur DNS
 show-kwinw-debug-title = Montrer la fenêtre de débuggage de kwin(Wayland)
 install-gaming-title = Installer les paquets de Gaming
 install-snapper-title = Installer le support pour Snapper
-install-spoof-dpi-title = Installer SpoofDPI
 
 # Main Page (buttons)
 button-about-tooltip = À propos
@@ -87,4 +85,4 @@ welcome-title = Bienvenue sur CachyOS!
 welcome-body =
     Merci de rejoindre notre communauté !
 
-    Nous, les développeurs de CachyOS, espérons que vous aimerez autant CachyOS que nous avons aimé à le développer. Les liens ci-dessous vous aiderons à prendre en main votre nouveau système d\'exploitation. Profitez donc de l\'expérience, et n'hésitez pas à nous envoyer vos retours. 
+    Nous, les développeurs de CachyOS, espérons que vous aimerez autant CachyOS que nous avons aimé à le développer. Les liens ci-dessous vous aiderons à prendre en main votre nouveau système d\'exploitation. Profitez donc de l\'expérience, et n'hésitez pas à nous envoyer vos retours.

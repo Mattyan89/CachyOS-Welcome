@@ -74,8 +74,6 @@ pub enum FixAction {
     InstallGaming,
     /// Install Snapper support for BTRFS snapshots
     InstallSnapper,
-    /// Install spoof-dpi to help bypass deep packet inspection
-    InstallSpoofDpi,
     /// Show the `KWin` Wayland debug console (if running)
     ShowKwinDebug,
 }

@@ -11,7 +11,6 @@ lock-doesnt-exist = La base de datos de Pacman no esta bloqueada!
 orphans-not-found = No se encontraron paquetes huérfanos!
 package-not-installed = El paquete '{$package_name}' no ha sido instalado!
 gaming-package-installed = Los paquetes de Gaming ya han sido instalados!
-spoof-dpi-package-installed = SpoofDPI ya ha sido instalado!
 snapper-package-installed = 'cachyos-snapper-support' ya ha sido instalado!
 
 # Application Browser page
@@ -50,7 +49,6 @@ dnsserver-title = Cambiar servidor DNS
 show-kwinw-debug-title = Mostrar la ventana debug de kwin(Wayland)
 install-gaming-title = Instalar paquetes de Gaming
 install-snapper-title = Instalar soporte de Snapper
-install-spoof-dpi-title = Instalar SpoofDPI
 
 # Main Page (buttons)
 button-about-tooltip = Sobre

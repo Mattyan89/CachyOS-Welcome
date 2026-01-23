@@ -55,10 +55,6 @@ pub fn handle_fix_command(action: FixAction) -> Result<()> {
             println!("{}", "Installing Snapper support...".bold());
             actions::install_snapper(crate::cli::run_command, tx);
         },
-        FixAction::InstallSpoofDpi => {
-            println!("{}", "Installing spoof-dpi...".bold());
-            actions::install_spoofdpi(crate::cli::run_command, tx);
-        },
         FixAction::ShowKwinDebug => {
             println!("{}", "Attempting to launch KWin debug console...".bold());
             actions::launch_kwin_debug_window();

@@ -31,7 +31,6 @@ pub enum Action {
     SetDnsServer,
     InstallGaming,
     InstallSnapper,
-    InstallSpoofDpi,
 }
 
 pub trait UI {

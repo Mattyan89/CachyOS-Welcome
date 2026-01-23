@@ -251,13 +251,3 @@ pub fn install_snapper(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage
         dialog_tx,
     );
 }
-
-pub fn install_spoofdpi(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage>) {
-    install_needed_packages(
-        callback,
-        &["spoofdpi"],
-        fl!("spoof-dpi-package-installed"),
-        Action::InstallSpoofDpi,
-        dialog_tx,
-    );
-}

@@ -11,7 +11,6 @@ lock-doesnt-exist = БД pacman не заблокирована!
 package-not-installed = Пакет '{$package_name}' не был установлен!
 gaming-package-installed = Игровые пакеты уже установлены!
 snapper-package-installed = Пакет 'cachyos-snapper-support' уже установлен!
-spoof-dpi-package-installed = SpoofDPI уже установлен!
 
 # Application Browser page
 advanced-btn = дополнительные
@@ -50,7 +49,6 @@ dnsserver-title = Сменить DNS-сервер
 show-kwinw-debug-title = Показать окно отладки kwin(Wayland)
 install-gaming-title = Установить пакеты для игр
 install-snapper-title = Установить поддержку Snapper
-install-spoof-dpi-title = Установить SpoofDPI
 
 # Main Page (buttons)
 button-about-tooltip = О программе

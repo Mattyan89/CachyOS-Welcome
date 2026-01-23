@@ -11,7 +11,6 @@ lock-doesnt-exist = Pacman db lock does not exist!
 orphans-not-found = No orphan packages found!
 package-not-installed = Package '{$package_name}' has not been installed!
 gaming-package-installed = Gaming packages already installed!
-spoof-dpi-package-installed = SpoofDPI is already installed!
 snapper-package-installed = 'cachyos-snapper-support' package already installed!
 
 # Application Browser page
@@ -57,7 +56,6 @@ dnsserver-title = Change DNS server
 show-kwinw-debug-title = Show kwin(Wayland) debug window
 install-gaming-title = Install Gaming packages
 install-snapper-title = Install Snapper support
-install-spoof-dpi-title = Install SpoofDPI
 
 # Main Page (buttons)
 button-about-tooltip = About
