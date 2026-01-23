@@ -53,7 +53,6 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
     let dialog_tx_clone = dialog_tx.clone();
     let dialog_tx_gaming = dialog_tx.clone();
     let dialog_tx_snapper = dialog_tx.clone();
-    let dialog_tx_spoof = dialog_tx.clone();
     removelock_btn.connect_clicked(move |_| {
         let dialog_tx_clone = dialog_tx_clone.clone();
         std::thread::spawn(move || {
