@@ -21,7 +21,7 @@ pub struct HelloWindow {
 }
 
 impl HelloWindow {
-    /// Create a new HelloWindow.
+    /// Create a new `HelloWindow`.
     pub fn new(
         application: &gtk::Application,
         preferences: serde_json::Value,

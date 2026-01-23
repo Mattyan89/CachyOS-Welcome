@@ -87,13 +87,13 @@ pub fn update_translations(builder: &Builder) {
 
                     match second_child_child_box.widget_name().as_str() {
                         "tweaksBrowserpage_options" => {
-                            update_translation_options_section(&second_child_child_box)
+                            update_translation_options_section(&second_child_child_box);
                         },
                         "tweaksBrowserpage_fixes" => {
-                            update_translation_fixes_section(&second_child_child_box)
+                            update_translation_fixes_section(&second_child_child_box);
                         },
                         "tweaksBrowserpage_apps" => {
-                            update_translation_apps_section(&second_child_child_box)
+                            update_translation_apps_section(&second_child_child_box);
                         },
                         _ => panic!("Unknown widget!"),
                     }

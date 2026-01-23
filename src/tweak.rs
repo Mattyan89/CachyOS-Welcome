@@ -6,13 +6,13 @@ pub enum TweakName {
     Psd,
     /// Systemd OOMD service
     Oomd,
-    /// BPFtune service
+    /// `BPFtune` service
     Bpftune,
     /// Bluetooth service
     Bluetooth,
     /// Ananicy Cpp service
     Ananicy,
-    /// CachyOS update notifier
+    /// `CachyOS` update notifier
     #[clap(name = "cachy-update")]
     CachyUpdate,
 }

@@ -208,7 +208,11 @@ fn create_apps_section() -> Option<gtk::Box> {
     topbox.pack_end(&box_collection, true, true, 0);
 
     topbox.set_hexpand(true);
-    if !box_collection.children().is_empty() { Some(topbox) } else { None }
+    if !box_collection.children().is_empty() {
+        Some(topbox)
+    } else {
+        None
+    }
 }
 
 pub fn create_tweaks_page(builder: &Builder) {

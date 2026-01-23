@@ -44,7 +44,7 @@ pub enum Commands {
     Tweak(TweakArgs),
     /// Configure DNS settings for network connections
     Dns(DnsArgs),
-    /// Launch associated CachyOS applications
+    /// Launch associated `CachyOS` applications
     Launch(LaunchArgs),
 }
 
@@ -70,13 +70,13 @@ pub enum FixAction {
     RemoveOrphans,
     /// Rank mirrors to find up2date&fastest ones
     RankMirrors,
-    /// Install CachyOS gaming meta-packages
+    /// Install `CachyOS` gaming meta-packages
     InstallGaming,
     /// Install Snapper support for BTRFS snapshots
     InstallSnapper,
     /// Install spoof-dpi to help bypass deep packet inspection
     InstallSpoofDpi,
-    /// Show the KWin Wayland debug console (if running)
+    /// Show the `KWin` Wayland debug console (if running)
     ShowKwinDebug,
 }
 
@@ -118,8 +118,8 @@ pub struct LaunchArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum AppToLaunch {
-    /// Launch the CachyOS Package Installer
+    /// Launch the `CachyOS` Package Installer
     PackageInstaller,
-    /// Launch the CachyOS Kernel Manager
+    /// Launch the `CachyOS` Kernel Manager
     KernelManager,
 }

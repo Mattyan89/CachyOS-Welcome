@@ -21,12 +21,12 @@ mod utils;
 mod window;
 
 use config::{APP_ID, PROFILE};
-use utils::*;
+use utils::{check_regular_file, fix_path, read_json, write_json, PacmanWrapper};
 use window::HelloWindow;
 
 use std::path::Path;
 use std::str;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, LazyLock, Mutex};
 
 use gtk::gio::prelude::*;
 use gtk::prelude::*;
@@ -34,14 +34,13 @@ use gtk::prelude::*;
 use clap::Parser;
 use gtk::glib;
 use i18n_embed::DesktopLanguageRequester;
-use once_cell::sync::Lazy;
 use serde_json::json;
 use tracing::{debug, error};
 use unic_langid::LanguageIdentifier;
 
 const RESPREFIX: &str = "/org/cachyos/hello";
 
-static G_SAVE_JSON: Lazy<Mutex<serde_json::Value>> = Lazy::new(|| {
+static G_SAVE_JSON: LazyLock<Mutex<serde_json::Value>> = LazyLock::new(|| {
     let preferences = get_preferences();
     let saved_json = get_saved_json(&preferences);
     Mutex::new(saved_json)
@@ -55,10 +54,10 @@ fn get_saved_locale() -> Option<String> {
 
 fn get_saved_json(preferences: &serde_json::Value) -> serde_json::Value {
     let save_path = fix_path(preferences["save_path"].as_str().unwrap());
-    if !Path::new(&save_path).exists() {
-        json!({"locale": ""})
-    } else {
+    if Path::new(&save_path).exists() {
         read_json(save_path.as_str())
+    } else {
+        json!({"locale": ""})
     }
 }
 
@@ -74,11 +73,11 @@ fn main() {
 
     // Setup localization.
     let saved_locale = get_saved_locale().unwrap();
-    let requested_languages = if !saved_locale.is_empty() {
+    let requested_languages = if saved_locale.is_empty() {
+        DesktopLanguageRequester::requested_languages()
+    } else {
         let lang_id: LanguageIdentifier = saved_locale.parse().unwrap();
         vec![lang_id]
-    } else {
-        DesktopLanguageRequester::requested_languages()
     };
 
     let localizer = crate::localization::localizer();
@@ -90,7 +89,7 @@ fn main() {
         // Parse arguments and run CLI logic
         let cli_args = cli::Cli::parse();
         if let Err(e) = run_cli(cli_args) {
-            eprintln!("Error: {}", e);
+            eprintln!("Error: {e}");
         }
     } else {
         // Register UI.

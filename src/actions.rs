@@ -187,12 +187,12 @@ pub fn remove_orphans(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage>
 }
 
 pub fn reset_keyring(callback: RunCmdCallback) {
-    let key_reset = r#"
+    let key_reset = r"
 rm -rf /etc/pacman.d/gnupg/ && \
 pacman-key --init && pacman-key --populate && \
 pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com && \
 pacman-key --lsign-key F3B607488DB35A47
-"#;
+";
 
     let _ = utils::run_cmd_terminal(callback, key_reset.into(), true);
 }

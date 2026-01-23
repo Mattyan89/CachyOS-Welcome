@@ -37,7 +37,7 @@ pub enum DnsAction {
         #[clap(short, long, value_name = "NAME")]
         connection: String,
     },
-    /// List available network connections managed by NetworkManager
+    /// List available network connections managed by `NetworkManager`
     ListConnections,
     /// List available third-party DNS providers
     ListServers,

@@ -389,7 +389,6 @@ dependencies = [
  "gtk",
  "i18n-embed",
  "i18n-embed-fl",
- "once_cell",
  "pacmanconf",
  "phf",
  "reqwest",

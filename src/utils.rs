@@ -175,14 +175,14 @@ pub fn get_tweak_toggle_cmd(
     action_data: &str,
     action_enabled: bool,
 ) -> (String, bool) {
-    let sysaction = if !action_enabled { "enable --now" } else { "disable --now" };
+    let sysaction = if action_enabled { "disable --now" } else { "enable --now" };
     let run_as_root = action_type != "user_service";
 
     let cmd = if !action_enabled {
-        if !run_as_root {
-            format!("systemctl --user {sysaction} --force {action_data}")
-        } else {
+        if run_as_root {
             format!("systemctl {sysaction} --force {action_data}")
+        } else {
+            format!("systemctl --user {sysaction} --force {action_data}")
         }
     } else if !run_as_root {
         format!("systemctl --user {sysaction} {action_data}")
