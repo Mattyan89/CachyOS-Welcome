@@ -4,14 +4,11 @@ use crate::tweak::{self, TweakName};
 use crate::ui::UI;
 use crate::{actions, dns, systemd_units, utils};
 
-use std::collections::HashSet;
-
 use anyhow::Result;
-use colored::*;
+use colored::Colorize;
 use gtk::glib;
 
 use subprocess::Exec;
-use tokio::runtime::Runtime;
 
 pub fn handle_fix_command(action: FixAction) -> Result<()> {
     let (tx, rx) = glib::MainContext::channel(glib::Priority::default());
@@ -104,14 +101,14 @@ pub fn handle_dns_command(action: DnsAction) -> Result<()> {
                 println!("No connections found.");
             } else {
                 for conn in connections {
-                    println!("- {}", conn);
+                    println!("- {conn}");
                 }
             }
         },
         DnsAction::ListServers => {
             println!("{}", "Available DNS Servers:".bold());
             for name in dns::G_DNS_SERVERS.keys() {
-                println!("- {}", name);
+                println!("- {name}");
             }
         },
     }
@@ -134,10 +131,10 @@ pub fn handle_launch_command(app: AppToLaunch) -> Result<()> {
     match which::which(bin_name) {
         Ok(path) => {
             Exec::cmd(path).detached().join()?;
-            println!("{} launched successfully.", app_name);
+            println!("{app_name} launched successfully.");
         },
         Err(_) => {
-            anyhow::bail!("'{}' executable not found in your PATH.", bin_name);
+            anyhow::bail!("'{bin_name}' executable not found in your PATH.");
         },
     }
     Ok(())
@@ -147,7 +144,7 @@ fn toggle_tweak_cli(tweak: TweakName, enable: bool) -> Result<()> {
     let (action_type, action_data, alpm_package_name) = tweak::get_details(tweak);
 
     let verb = if enable { "Enabling" } else { "Disabling" };
-    println!("{} tweak '{:?}'...", verb, tweak);
+    println!("{verb} tweak '{tweak:?}'...");
 
     // If enabling, ensure package is installed first
     if enable && !alpm_package_name.is_empty() && !utils::is_alpm_pkg_installed(alpm_package_name) {
@@ -159,8 +156,7 @@ fn toggle_tweak_cli(tweak: TweakName, enable: bool) -> Result<()> {
             crate::cli::run_command(&format!("pacman -S --noconfirm {alpm_package_name}"), true);
         if !status || !utils::is_alpm_pkg_installed(alpm_package_name) {
             anyhow::bail!(
-                "Failed to install required package '{}'. Cannot enable tweak.",
-                alpm_package_name
+                "Failed to install required package '{alpm_package_name}'. Cannot enable tweak."
             );
         }
     }
@@ -178,7 +174,7 @@ fn toggle_tweak_cli(tweak: TweakName, enable: bool) -> Result<()> {
     }
 
     let status = if enable { "enabled".green() } else { "disabled".red() };
-    println!("Tweak '{:?}' successfully {}.", tweak, status);
+    println!("Tweak '{tweak:?}' successfully {status}.");
     Ok(())
 }
 
@@ -186,17 +182,7 @@ fn list_tweaks() -> Result<()> {
     println!("{}", "Available Tweaks Status:".bold());
 
     // Get all enabled units
-    let rt = Runtime::new()?;
-    let enabled_units: HashSet<String> = rt.block_on(async {
-        let mut units = HashSet::new();
-        if let Ok(system_units) = systemd_units::get_enabled_global_units().await {
-            units.extend(system_units);
-        }
-        if let Ok(user_units) = systemd_units::get_enabled_user_units().await {
-            units.extend(user_units);
-        }
-        units
-    });
+    systemd_units::refresh_cache();
 
     for tweak in &[
         TweakName::Psd,
@@ -207,7 +193,7 @@ fn list_tweaks() -> Result<()> {
         TweakName::CachyUpdate,
     ] {
         let (_, service_names, _) = tweak::get_details(*tweak);
-        let is_enabled = service_names.split_whitespace().all(|s| enabled_units.contains(s));
+        let is_enabled = systemd_units::check_any_units(service_names);
 
         let status = if is_enabled { "[enabled]".green() } else { "[disabled]".red() };
 

@@ -1,18 +1,13 @@
-use crate::systemd_units::SystemdUnits;
 use crate::tweak::{self, TweakName};
 use crate::ui::{MessageType, UI};
 use crate::{fl, systemd_units, utils};
 
 use std::str;
-use std::sync::Mutex;
 
 use gtk::prelude::*;
 
 use glib::translate::FromGlib;
 use gtk::glib;
-use once_cell::sync::Lazy;
-use tokio::runtime::Runtime;
-use tracing::error;
 
 #[macro_export]
 macro_rules! create_tweak_checkbox {
@@ -29,41 +24,6 @@ macro_rules! create_tweak_checkbox {
     }};
 }
 
-static G_LOCAL_UNITS: Lazy<Mutex<SystemdUnits>> = Lazy::new(|| Mutex::new(SystemdUnits::new()));
-static G_GLOBAL_UNITS: Lazy<Mutex<SystemdUnits>> = Lazy::new(|| Mutex::new(SystemdUnits::new()));
-
-pub(crate) fn load_enabled_units() {
-    G_LOCAL_UNITS.lock().unwrap().enabled_units.clear();
-
-    let rt = Runtime::new().expect("Failed to initialize tokio runtime");
-    let res = rt.block_on(async move {
-        let units = systemd_units::get_enabled_global_units().await?;
-        G_LOCAL_UNITS.lock().unwrap().enabled_units = units;
-
-        anyhow::Ok(())
-    });
-
-    if let Err(res_err) = res {
-        error!("Failed to load systemd units: {res_err}");
-    }
-}
-
-pub(crate) fn load_global_enabled_units() {
-    G_GLOBAL_UNITS.lock().unwrap().enabled_units.clear();
-
-    let rt = Runtime::new().expect("Failed to initialize tokio runtime");
-    let res = rt.block_on(async move {
-        let units = systemd_units::get_enabled_user_units().await?;
-        G_GLOBAL_UNITS.lock().unwrap().enabled_units = units;
-
-        anyhow::Ok(())
-    });
-
-    if let Err(res_err) = res {
-        error!("Failed to load user systemd units: {res_err}");
-    }
-}
-
 fn set_tweak_check_data(check_btn: &gtk::CheckButton, tweak_name: TweakName) {
     unsafe {
         check_btn.set_data("tweakName", tweak_name);
@@ -71,15 +31,7 @@ fn set_tweak_check_data(check_btn: &gtk::CheckButton, tweak_name: TweakName) {
 }
 
 fn connect_tweak(check_btn: &gtk::CheckButton, action_data: &'static str) {
-    let local_guard = G_LOCAL_UNITS.lock().unwrap();
-    let global_guard = G_GLOBAL_UNITS.lock().unwrap();
-
-    let is_enabled = action_data.split_whitespace().all(|unit| {
-        local_guard.enabled_units.contains(&unit.to_string())
-            || global_guard.enabled_units.contains(&unit.to_string())
-    });
-
-    check_btn.set_active(is_enabled);
+    check_btn.set_active(systemd_units::check_any_units(action_data));
 
     connect_clicked_and_save(check_btn, on_servbtn_clicked);
 }
@@ -130,12 +82,11 @@ fn toggle_service(
     callback: std::boxed::Box<dyn Fn(bool)>,
 ) {
     let (action_type, action_data, alpm_package_name) = tweak::get_details(tweak_name);
-    let units_handle = if action_type == "user_service" { &G_GLOBAL_UNITS } else { &G_LOCAL_UNITS }
-        .lock()
-        .unwrap();
-
-    let action_enabled =
-        action_data.split(' ').all(|x| units_handle.enabled_units.contains(&x.to_owned()));
+    let action_enabled = if action_type == "user_service" {
+        systemd_units::check_user_units(action_data)
+    } else {
+        systemd_units::check_system_units(action_data)
+    };
     let (cmd, run_as_root) = utils::get_tweak_toggle_cmd(action_type, action_data, action_enabled);
 
     // Create context channel.
@@ -163,9 +114,9 @@ fn toggle_service(
         utils::run_cmd(cmd, run_as_root).unwrap();
 
         if action_type == "user_service" {
-            load_global_enabled_units();
+            systemd_units::refresh_user_cache();
         } else {
-            load_enabled_units();
+            systemd_units::refresh_system_cache();
         }
     });
 

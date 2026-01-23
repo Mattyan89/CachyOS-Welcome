@@ -3,7 +3,7 @@ pub mod i18n;
 mod tweaks;
 
 use crate::ui::{Action, UI};
-use crate::{actions, create_gtk_button, fl, utils};
+use crate::{actions, fl, systemd_units, utils};
 
 use std::path::Path;
 use std::str;
@@ -208,10 +208,7 @@ fn create_apps_section() -> Option<gtk::Box> {
     topbox.pack_end(&box_collection, true, true, 0);
 
     topbox.set_hexpand(true);
-    match !box_collection.children().is_empty() {
-        true => Some(topbox),
-        _ => None,
-    }
+    if !box_collection.children().is_empty() { Some(topbox) } else { None }
 }
 
 pub fn create_tweaks_page(builder: &Builder) {
@@ -219,8 +216,8 @@ pub fn create_tweaks_page(builder: &Builder) {
     install.set_visible(true);
     install.set_label(&fl!("tweaksbrowser-label"));
 
-    tweaks::load_enabled_units();
-    tweaks::load_global_enabled_units();
+    // fire cache
+    systemd_units::refresh_cache();
 
     let viewport = gtk::Viewport::new(gtk::Adjustment::NONE, gtk::Adjustment::NONE);
     let image = gtk::Image::from_icon_name(Some("go-previous"), gtk::IconSize::Button);
