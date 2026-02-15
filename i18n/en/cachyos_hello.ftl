@@ -12,6 +12,7 @@ orphans-not-found = No orphan packages found!
 package-not-installed = Package '{$package_name}' has not been installed!
 gaming-package-installed = Gaming packages already installed!
 snapper-package-installed = 'cachyos-snapper-support' package already installed!
+winboat-package-installed = Winboat packages already installed!
 
 # Application Browser page
 advanced-btn = advanced
@@ -34,6 +35,7 @@ dns-server-changed = DNS server was successfully changed!
 dns-server-failed = Failed to set DNS server!
 dns-server-reset = DNS server has been reset!
 dns-server-reset-failed = Failed to reset DNS server!
+winboat-install-failed = Failed to install Winboat!
 
 # Tweaks page (tweaks)
 tweak-enabled-title = {$tweak} enabled
@@ -56,6 +58,7 @@ dnsserver-title = Change DNS server
 show-kwinw-debug-title = Show kwin(Wayland) debug window
 install-gaming-title = Install Gaming packages
 install-snapper-title = Install Snapper support
+install-winboat-title = Install Winboat
 
 # Main Page (buttons)
 button-about-tooltip = About

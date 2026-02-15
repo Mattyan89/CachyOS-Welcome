@@ -1,5 +1,5 @@
 use crate::ui::{Action, DialogMessage, MessageType, RunCmdCallback};
-use crate::{fl, kwin_dbus, utils, PacmanWrapper};
+use crate::{fl, kwin_dbus, systemd_units, utils, PacmanWrapper};
 
 use std::path::Path;
 
@@ -250,4 +250,36 @@ pub fn install_snapper(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage
         Action::InstallSnapper,
         dialog_tx,
     );
+}
+
+pub fn install_winboat(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage>) {
+    const ALPM_PACKAGE_NAMES: [&str; 3] = ["winboat", "docker", "docker-compose"];
+    install_needed_packages(
+        callback,
+        &ALPM_PACKAGE_NAMES,
+        fl!("winboat-package-installed"),
+        Action::InstallWinboat,
+        dialog_tx.clone(),
+    );
+
+    // Enable docker.service after installation
+    const DOCKER_SERVICE: &str = "docker.service";
+    let docker_enabled = systemd_units::check_system_units(DOCKER_SERVICE);
+    if utils::is_alpm_pkg_installed("docker") && !docker_enabled {
+        let (cmd, run_as_root) =
+            utils::get_tweak_toggle_cmd("service", DOCKER_SERVICE, docker_enabled);
+        let status_code = utils::run_cmd(cmd, run_as_root).unwrap();
+        if !status_code.success() {
+            dialog_tx
+                .send(DialogMessage {
+                    msg: fl!("winboat-install-failed"),
+                    msg_type: MessageType::Error,
+                    action: Action::InstallWinboat,
+                })
+                .expect("Couldn't send data to channel");
+        }
+
+        // refresh units cache
+        systemd_units::refresh_system_cache();
+    }
 }
