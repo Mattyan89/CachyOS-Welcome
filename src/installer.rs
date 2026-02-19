@@ -72,22 +72,22 @@ fn outdated_version_check(ui: &GUI, message: String) -> bool {
 fn edition_compat_check(ui: &GUI, message: String) -> bool {
     let edition_tag = fs::read_to_string("/etc/edition-tag").unwrap_or("desktop".to_string());
 
-    if edition_tag == "handheld" {
-        let profiles_path =
-            format!("{}/handhelds/profiles.toml", chwd::consts::CHWD_PCI_CONFIG_DIR);
+    let profiles_path = format!("{}/handhelds/profiles.toml", chwd::consts::CHWD_PCI_CONFIG_DIR);
 
-        let handheld_profiles =
-            chwd::profile::parse_profiles(&profiles_path).expect("Failed to parse profiles");
-        let handheld_profile_names: Vec<_> =
-            handheld_profiles.iter().map(|profile| &profile.name).collect();
+    let handheld_profiles =
+        chwd::profile::parse_profiles(&profiles_path).expect("Failed to parse profiles");
+    let handheld_profile_names: Vec<_> =
+        handheld_profiles.iter().map(|profile| &profile.name).collect();
 
-        let available_profiles = chwd::profile::get_available_profiles(false);
-
-        if available_profiles.iter().any(|profile| handheld_profile_names.contains(&&profile.name))
-        {
-            ui.show_message(MessageType::Warning, &fl!("unsupported-hw-warning"), message.clone());
-            return true;
-        }
+    let available_profiles = chwd::profile::get_available_profiles(false);
+    let supported_handheld =
+        available_profiles.iter().any(|profile| handheld_profile_names.contains(&&profile.name));
+    if edition_tag == "handheld" && !supported_handheld {
+        ui.show_message(MessageType::Warning, &fl!("unsupported-hw-warning"), message.clone());
+        return false;
+    } else if edition_tag == "desktop" && supported_handheld {
+        ui.show_message(MessageType::Error, &fl!("desktop-on-handheld-error"), message.clone());
+        return false;
     }
     true
 }
