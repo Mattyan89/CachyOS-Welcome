@@ -1,6 +1,7 @@
 use crate::ui::{Action, DialogMessage, MessageType, RunCmdCallback};
 use crate::{fl, kwin_dbus, systemd_units, utils, PacmanWrapper};
 
+use std::env;
 use std::path::Path;
 
 use gtk::glib::Sender;
@@ -47,6 +48,12 @@ pub fn get_dns_for_connection(conn_name: &str) -> Option<(String, String)> {
     } else {
         Some((ipv4_dns, ipv6_dns))
     }
+}
+
+fn get_user_groups() -> Vec<String> {
+    let groups =
+        Exec::cmd("/sbin/groups").stdout(Redirection::Pipe).capture().unwrap().stdout_str();
+    groups.split('\n').filter(|x| !x.is_empty()).map(String::from).collect::<Vec<_>>()
 }
 
 pub fn launch_kwin_debug_window() {
@@ -252,12 +259,12 @@ pub fn install_winboat(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage
         dialog_tx.clone(),
     );
 
-    // Enable docker.service after installation
-    const DOCKER_SERVICE: &str = "docker.service";
-    let docker_enabled = systemd_units::check_system_units(DOCKER_SERVICE);
+    // Enable docker.socket after installation
+    const DOCKER_TARGET: &str = "docker.socket";
+    let docker_enabled = systemd_units::check_system_units(DOCKER_TARGET);
     if utils::is_alpm_pkg_installed("docker") && !docker_enabled {
         let (cmd, run_as_root) =
-            utils::get_tweak_toggle_cmd("service", DOCKER_SERVICE, docker_enabled);
+            utils::get_tweak_toggle_cmd("service", DOCKER_TARGET, docker_enabled);
         let status_code = utils::run_cmd(cmd, run_as_root).unwrap();
         if !status_code.success() {
             dialog_tx
@@ -271,5 +278,23 @@ pub fn install_winboat(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage
 
         // refresh units cache
         systemd_units::refresh_system_cache();
+    }
+
+    // Add the current user to the docker group
+    let group_added = get_user_groups().iter().any(|x| x == "docker");
+    if utils::is_alpm_pkg_installed("docker") && !group_added {
+        if let Ok(current_user) = env::var("USER") {
+            let status_code =
+                utils::run_cmd(format!("/sbin/usermod -aG docker {current_user}"), true).unwrap();
+            if !status_code.success() {
+                dialog_tx
+                    .send(DialogMessage {
+                        msg: fl!("winboat-install-failed"),
+                        msg_type: MessageType::Error,
+                        action: Action::InstallWinboat,
+                    })
+                    .expect("Couldn't send data to channel");
+            }
+        }
     }
 }
