@@ -15,24 +15,24 @@ i18n-embed = { version = "0.16", features = ["fluent-system", "desktop-requester
 i18n-embed-fl = "0.10"
 rust-embed = { version = "8", features = ["debug-embed", "include-exclude"] }
 gtk = { version = "0.18", default-features = false }
-gio = { version = "0.21", default-features = false }
-gdk-pixbuf = "0.21"
-glib = { default-features = false, version = "0.21" }
+gio = { version = "0.22", default-features = false }
+gdk-pixbuf = "0.22"
+glib = { default-features = false, version = "0.22" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 reqwest = { version = "0.13", features = ["blocking", "json"] }
 unic-langid = "0.9"
 phf = { version = "0.13", features = ["macros"], default-features = false }
-chwd = { git = "https://github.com/CachyOS/chwd", rev = "595312b31e6dd355c9a8fcd09acde24b7f9c3e3b", version = "1.16.1" }
+chwd = { git = "https://github.com/CachyOS/chwd", rev = "fd4fe02d4bde816ed0f24d98d6d4aceab12f5554", version = "1.20.0" }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
 which = { version = "8.0", features = ["tracing"] }
 
 anyhow = { version = "1", default-features = false, features = ["std"] }
-tokio = { version = "1.49", features = ["macros", "sync", "rt-multi-thread"] }
+tokio = { version = "1.50", features = ["macros", "sync", "rt-multi-thread"] }
 zbus = { version = "5", features = ["tokio"], default-features = false }
-zbus_systemd = { version = "0.25900.0", features = ["systemd1"], default-features = false }
+zbus_systemd = { version = "0.25901.0", features = ["systemd1"], default-features = false }
 clap = { features = ["derive"], version = "4" }
 colored = "3"
 
