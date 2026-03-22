@@ -1,15 +1,18 @@
 use crate::config::{APP_ID, VERSION};
 use crate::{check_regular_file, installer, pages, utils, RESPREFIX};
 
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+use std::rc::Rc;
+use std::time::Duration;
 
 use gtk::prelude::*;
 
 use gtk::gdk_pixbuf::Pixbuf;
 use gtk::glib::GString;
-use gtk::{glib, Builder, HeaderBar, Window};
+use gtk::{gdk, glib, Builder, HeaderBar, Window};
 use tracing::{debug, error};
 use unic_langid::LanguageIdentifier;
 
@@ -61,6 +64,25 @@ impl HelloWindow {
             let icon_path = format!("{RESPREFIX}/data/img/{name}.png");
             let image: gtk::Image = builder.object(name.as_str()).unwrap();
             image.set_from_resource(Some(&icon_path));
+
+            // Enable keyboard activation (Enter/Space) for social EventBoxes
+            btn.connect_key_press_event(|widget, event| {
+                let keyval = event.keyval();
+                if keyval == gdk::keys::constants::Return
+                    || keyval == gdk::keys::constants::KP_Enter
+                    || keyval == gdk::keys::constants::space
+                {
+                    let name = widget.widget_name();
+                    let hello_window = unsafe { crate::G_HELLO_WINDOW.as_ref().unwrap() };
+                    let preferences = hello_window.get_preferences("urls");
+                    if let Some(uri) = preferences[name.as_str()].as_str() {
+                        hello_window.open_uri(uri);
+                    }
+                    glib::Propagation::Stop
+                } else {
+                    glib::Propagation::Proceed
+                }
+            });
         }
 
         let homepage_grid: gtk::Grid = builder.object("homepage").unwrap();
@@ -164,6 +186,40 @@ impl HelloWindow {
 
         // Show the UI
         main_window.show();
+
+        // Set initial focus on a meaningful interactive widget
+        if installer::is_iso(&preferences) {
+            let install: gtk::Button = builder.object("install").unwrap();
+            install.grab_focus();
+        } else {
+            let readme: gtk::Button = builder.object("readme").unwrap();
+            readme.grab_focus();
+        }
+
+        // Briefly dim focused widget on keyboard Tab for navigation feedback
+        let prev_dimmed: Rc<RefCell<Option<gtk::Widget>>> = Rc::new(RefCell::new(None));
+        let prev = prev_dimmed.clone();
+        let window = main_window.clone();
+        main_window.connect_key_press_event(move |_, event| {
+            let keyval = event.keyval();
+            if keyval == gdk::keys::constants::Tab || keyval == gdk::keys::constants::ISO_Left_Tab {
+                let window = window.clone();
+                let prev = prev.clone();
+                glib::idle_add_local_once(move || {
+                    if let Some(widget) = prev.borrow_mut().take() {
+                        widget.set_opacity(1.0);
+                    }
+                    if let Some(focused) = window.focused_widget() {
+                        focused.set_opacity(0.5);
+                        *prev.borrow_mut() = Some(focused.clone());
+                        glib::timeout_add_local_once(Duration::from_millis(180), move || {
+                            focused.set_opacity(1.0);
+                        });
+                    }
+                });
+            }
+            glib::Propagation::Proceed
+        });
 
         // setup pages content
         let hello_window = HelloWindow { window: main_window, builder, preferences };
