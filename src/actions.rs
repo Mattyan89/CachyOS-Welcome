@@ -129,9 +129,12 @@ pub fn change_dns_server(
     let dot_value = if enable_dot { 2 } else { 0 };
     let status_code = utils::run_cmd(
         format!(
-            "nmcli con mod '{conn_name}' ipv4.dns '{ipv4_with_sni}' && nmcli con mod \
-             '{conn_name}' ipv6.dns '{ipv6_with_sni}' && nmcli con mod '{conn_name}' \
-             connection.dns-over-tls {dot_value} && systemctl restart NetworkManager"
+            "nmcli con mod '{conn_name}' ipv4.dns '{ipv4_with_sni}' && \
+             nmcli con mod '{conn_name}' ipv4.dns-priority -1 && \
+             nmcli con mod '{conn_name}' ipv6.dns '{ipv6_with_sni}' && \
+             nmcli con mod '{conn_name}' ipv6.dns-priority -1 && \
+             nmcli con mod '{conn_name}' connection.dns-over-tls {dot_value} && \
+             systemctl restart NetworkManager"
         ),
         true,
     )
@@ -156,10 +159,18 @@ pub fn change_dns_server(
 }
 
 pub fn reset_dns_server(conn_name: &str, dialog_tx: Sender<DialogMessage>) {
+    // Stop blocky if it was running (DoH mode)
+    stop_blocky();
+
+    let conn = conn_name.replace('\'', "'\\'");
     let status_code = utils::run_cmd(
         format!(
-            "nmcli con mod '{conn_name}' ipv4.dns '' && nmcli con mod '{conn_name}' ipv6.dns '' \
-             && nmcli con mod '{conn_name}' connection.dns-over-tls -1 \
+            "nmcli con mod '{conn}' ipv4.dns '' && nmcli con mod '{conn}' ipv6.dns '' \\
+             && nmcli con mod '{conn}' ipv4.dns-priority 0 \\
+             && nmcli con mod '{conn}' ipv6.dns-priority 0 \\
+             && nmcli con mod '{conn}' ipv4.ignore-auto-dns no \\
+             && nmcli con mod '{conn}' ipv6.ignore-auto-dns no \\
+             && nmcli con mod '{conn}' connection.dns-over-tls -1 \\
              && systemctl restart NetworkManager"
         ),
         true,
@@ -182,6 +193,112 @@ pub fn reset_dns_server(conn_name: &str, dialog_tx: Sender<DialogMessage>) {
             })
             .expect("Couldn't send data to channel");
     }
+}
+
+/// Set DNS to use DoH via blocky local proxy.
+/// Installs blocky if needed, writes its config, starts the service, and points NM to 127.0.0.1.
+pub fn change_dns_server_doh(
+    callback: RunCmdCallback,
+    conn_name: &str,
+    doh_url: &str,
+    bootstrap_ipv4: &str,
+    bootstrap_ipv6: &str,
+    dot_hostname: Option<&str>,
+    dialog_tx: Sender<DialogMessage>,
+) {
+    // 1. Install blocky if not present
+    if !utils::is_alpm_pkg_installed("blocky") {
+        const ALPM_PACKAGE_NAMES: [&str; 1] = ["blocky"];
+        install_needed_packages(
+            callback,
+            &ALPM_PACKAGE_NAMES,
+            fl!("doh-blocky-install-failed"),
+            Action::SetDnsServer,
+            dialog_tx.clone(),
+        );
+        if !utils::is_alpm_pkg_installed("blocky") {
+            return;
+        }
+    }
+
+    // 2. Generate and write blocky config
+    let config = dns::generate_blocky_config(doh_url, bootstrap_ipv4, bootstrap_ipv6, dot_hostname);
+
+    let escaped_config = config.replace('\'', "'\\''");
+    let write_status = utils::run_cmd(
+        format!(
+            "mkdir -p /etc/blocky && printf '%s' '{}' > {}",
+            escaped_config,
+            dns::BLOCKY_CONFIG_PATH,
+        ),
+        true,
+    )
+    .unwrap();
+    if !write_status.success() {
+        dialog_tx
+            .send(DialogMessage {
+                msg: fl!("dns-server-failed"),
+                msg_type: MessageType::Error,
+                action: Action::SetDnsServer,
+            })
+            .expect("Couldn't send data to channel");
+        return;
+    }
+
+    // 3. Configure NM, restart NM, then (re)start blocky once network is back
+    // Use ignore-auto-dns to ensure all DNS goes through blocky — DHCP DNS
+    // would bypass the encrypted proxy. LAN names still work via mDNS/LLMNR.
+    let conn = conn_name.replace('\'', "'\\'");
+    let status_code = utils::run_cmd(
+        format!(
+            "systemctl enable {blocky} && \\
+             nmcli con mod '{conn}' ipv4.dns '127.0.0.1' && \\
+             nmcli con mod '{conn}' ipv4.ignore-auto-dns yes && \\
+             nmcli con mod '{conn}' ipv6.dns '::1' && \\
+             nmcli con mod '{conn}' ipv6.ignore-auto-dns yes && \\
+             nmcli con mod '{conn}' connection.dns-over-tls 0 && \
+             systemctl restart NetworkManager && \
+             sleep 1 && \
+             systemctl restart {blocky}",
+            blocky = dns::BLOCKY_SERVICE,
+        ),
+        true,
+    )
+    .unwrap();
+
+    if status_code.success() {
+        dialog_tx
+            .send(DialogMessage {
+                msg: fl!("dns-server-changed"),
+                msg_type: MessageType::Info,
+                action: Action::SetDnsServer,
+            })
+            .expect("Couldn't send data to channel");
+    } else {
+        dialog_tx
+            .send(DialogMessage {
+                msg: fl!("dns-server-failed"),
+                msg_type: MessageType::Error,
+                action: Action::SetDnsServer,
+            })
+            .expect("Couldn't send data to channel");
+    }
+}
+
+/// Stop blocky if it's running (used during reset or when switching away from DoH).
+pub fn stop_blocky() {
+    let (cmd, run_as_root) =
+        utils::get_tweak_toggle_cmd("service", dns::BLOCKY_SERVICE, true);
+    let _ = utils::run_cmd(cmd, run_as_root);
+}
+
+/// Returns true if blocky is currently active.
+pub fn is_blocky_active() -> bool {
+    utils::run_cmd(
+        format!("systemctl is-active --quiet {}", dns::BLOCKY_SERVICE),
+        false,
+    )
+    .is_ok_and(|s| s.success())
 }
 
 pub fn remove_dblock(dialog_tx: Sender<DialogMessage>) {
