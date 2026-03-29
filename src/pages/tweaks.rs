@@ -1,3 +1,4 @@
+use crate::systemd_units::Scope;
 use crate::tweak::{self, TweakName};
 use crate::ui::{MessageType, UI};
 use crate::{fl, systemd_units, utils};
@@ -5,6 +6,7 @@ use crate::{fl, systemd_units, utils};
 use std::str;
 
 use gtk::prelude::*;
+use subprocess::Exec;
 
 use glib::translate::FromGlib;
 use gtk::glib;
@@ -89,8 +91,6 @@ fn toggle_service(
     } else {
         systemd_units::check_system_units(action_data)
     };
-    let (cmd, run_as_root) = utils::get_tweak_toggle_cmd(action_type, action_data, action_enabled);
-
     // Create context channel.
     let (tx, rx) = glib::MainContext::channel(glib::Priority::default());
 
@@ -114,11 +114,19 @@ fn toggle_service(
                 return;
             }
         }
-        utils::run_cmd(cmd, run_as_root).unwrap();
+
+        let scope = if action_type == "user_service" { Scope::User } else { Scope::System };
+        let units: Vec<&str> = action_data.split_whitespace().collect();
+        if action_enabled {
+            let _ = systemd_units::systemd_disable(&units, scope);
+        } else {
+            let _ = systemd_units::systemd_enable(&units, scope, true);
+        }
 
         if action_enabled && action_type == "user_service" {
             if tweak::is_globally_enabled(&action_data) {
-                let _ = utils::run_cmd(format!("systemctl --global disable {action_data}"), false);
+                let _ =
+                    Exec::cmd("/sbin/systemctl").args(&["--global", "disable"]).args(&units).join();
             }
             tweak::remove_autostart_files(tweak_name);
         }

@@ -1,5 +1,6 @@
 use crate::cli::{AppToLaunch, FixAction, TweakAction};
 use crate::dns::DnsAction;
+use crate::systemd_units::Scope;
 use crate::tweak::{self, TweakName};
 use crate::ui::UI;
 use crate::{actions, dns, systemd_units, utils};
@@ -301,16 +302,17 @@ fn toggle_tweak_cli(tweak: TweakName, enable: bool) -> Result<()> {
         }
     }
 
-    let (cmd, run_as_root) = utils::get_tweak_toggle_cmd(action_type, action_data, !enable);
+    let scope = if action_type == "user_service" { Scope::User } else { Scope::System };
+    let units: Vec<&str> = action_data.split_whitespace().collect();
 
-    println!("> {}", cmd.cyan());
-    let exit_status = utils::run_cmd(cmd, run_as_root).unwrap();
-    if !exit_status.success() {
-        anyhow::bail!(
-            "Failed to {} tweak '{:?}'. Command exited with error.",
-            verb.to_lowercase(),
-            tweak
-        );
+    println!("> {} {}", verb, action_data.cyan());
+    let result = if enable {
+        systemd_units::systemd_enable(&units, scope, true)
+    } else {
+        systemd_units::systemd_disable(&units, scope)
+    };
+    if let Err(e) = result {
+        anyhow::bail!("Failed to {} tweak '{:?}': {e}", verb.to_lowercase(), tweak);
     }
 
     let status = if enable { "enabled".green() } else { "disabled".red() };

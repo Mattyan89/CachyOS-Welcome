@@ -10,9 +10,8 @@ use subprocess::{Exec, Redirection};
 use tracing::error;
 
 fn nmcli_mod(conn_name: &str, property: &str, value: &str) -> anyhow::Result<()> {
-    let status = Exec::cmd("/sbin/nmcli")
-        .args(&["con", "mod", conn_name, property, value])
-        .join()?;
+    let status =
+        Exec::cmd("/sbin/nmcli").args(&["con", "mod", conn_name, property, value]).join()?;
     anyhow::ensure!(status.success(), "nmcli con mod {property} failed");
     Ok(())
 }
@@ -434,10 +433,8 @@ pub fn install_winboat(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage
     const DOCKER_TARGET: &str = "docker.socket";
     let docker_enabled = systemd_units::check_system_units(DOCKER_TARGET);
     if utils::is_alpm_pkg_installed("docker") && !docker_enabled {
-        let (cmd, run_as_root) =
-            utils::get_tweak_toggle_cmd("service", DOCKER_TARGET, docker_enabled);
-        let status_code = utils::run_cmd(cmd, run_as_root).unwrap();
-        if !status_code.success() {
+        let result = systemd_units::systemd_enable(&[DOCKER_TARGET], Scope::System, false);
+        if result.is_err() {
             dialog_tx
                 .send(DialogMessage {
                     msg: fl!("winboat-install-failed"),

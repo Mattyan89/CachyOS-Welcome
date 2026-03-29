@@ -159,29 +159,6 @@ pub fn is_alpm_pkg_installed(package_name: &str) -> bool {
     alpm.localdb().pkg(package_name.as_bytes()).is_ok()
 }
 
-pub fn get_tweak_toggle_cmd(
-    action_type: &str,
-    action_data: &str,
-    action_enabled: bool,
-) -> (String, bool) {
-    let sysaction = if action_enabled { "disable --now" } else { "enable --now" };
-    let run_as_root = action_type != "user_service";
-
-    let cmd = if !action_enabled {
-        if run_as_root {
-            format!("systemctl {sysaction} --force {action_data}")
-        } else {
-            format!("systemctl --user {sysaction} --force {action_data}")
-        }
-    } else if !run_as_root {
-        format!("systemctl --user {sysaction} {action_data}")
-    } else {
-        format!("systemctl {sysaction} {action_data}")
-    };
-
-    (cmd, false)
-}
-
 #[cfg(test)]
 mod test {
     use super::*;

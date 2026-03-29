@@ -197,10 +197,8 @@ pub fn systemd_is_active(unit: &str, scope: Scope) -> anyhow::Result<bool> {
         let conn = connection_for_scope(scope).await?;
         let manager = zbus_systemd::systemd1::ManagerProxy::new(&conn).await?;
         let path = manager.get_unit(unit.to_string()).await?;
-        let unit_proxy = zbus_systemd::systemd1::UnitProxy::builder(&conn)
-            .path(path)?
-            .build()
-            .await?;
+        let unit_proxy =
+            zbus_systemd::systemd1::UnitProxy::builder(&conn).path(path)?.build().await?;
         Ok(unit_proxy.active_state().await? == "active")
     })
 }
