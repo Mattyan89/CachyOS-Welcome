@@ -9,9 +9,6 @@ use gtk::glib::Sender;
 use subprocess::{Exec, Redirection};
 use tracing::error;
 
-/// Run a single `nmcli con mod` command.  Arguments are passed directly via
-/// execvp — no shell, no quoting issues, connection names with special
-/// characters are safe.
 fn nmcli_mod(conn_name: &str, property: &str, value: &str) -> anyhow::Result<()> {
     let status = Exec::cmd("/sbin/nmcli")
         .args(&["con", "mod", conn_name, property, value])
@@ -288,14 +285,13 @@ pub fn change_dns_server_doh(
 
 /// Stop blocky if it's running (used during reset or when switching away from `DoH`).
 pub fn stop_blocky() {
-    let (cmd, run_as_root) = utils::get_tweak_toggle_cmd("service", dns::BLOCKY_SERVICE, true);
-    let _ = utils::run_cmd(cmd, run_as_root);
+    let _ = systemd_units::systemd_stop(dns::BLOCKY_SERVICE, Scope::System);
+    let _ = systemd_units::systemd_disable(&[dns::BLOCKY_SERVICE], Scope::System);
 }
 
 /// Returns true if blocky is currently active.
 pub fn is_blocky_active() -> bool {
-    utils::run_cmd(format!("systemctl is-active --quiet {}", dns::BLOCKY_SERVICE), false)
-        .is_ok_and(subprocess::ExitStatus::success)
+    systemd_units::systemd_is_active(dns::BLOCKY_SERVICE, Scope::System).unwrap_or(false)
 }
 
 pub fn remove_dblock(dialog_tx: Sender<DialogMessage>) {
