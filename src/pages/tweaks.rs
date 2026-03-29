@@ -19,7 +19,7 @@ macro_rules! create_tweak_checkbox {
         set_tweak_check_data(&temp_btn, $tweak_name);
 
         let (_, action_data, _) = tweak::get_details($tweak_name);
-        connect_tweak(&temp_btn, action_data);
+        connect_tweak(&temp_btn, $tweak_name, action_data);
         temp_btn
     }};
 }
@@ -30,8 +30,10 @@ fn set_tweak_check_data(check_btn: &gtk::CheckButton, tweak_name: TweakName) {
     }
 }
 
-fn connect_tweak(check_btn: &gtk::CheckButton, action_data: &'static str) {
-    check_btn.set_active(systemd_units::check_any_units(action_data));
+fn connect_tweak(check_btn: &gtk::CheckButton, tweak_name: TweakName, action_data: &'static str) {
+    let is_active =
+        systemd_units::check_any_units(action_data) || tweak::check_autostart_active(tweak_name);
+    check_btn.set_active(is_active);
 
     connect_clicked_and_save(check_btn, on_servbtn_clicked);
 }
@@ -95,6 +97,7 @@ fn toggle_service(
     let dialog_text = fl!("package-not-installed", package_name = alpm_package_name);
 
     let action_type = action_type.to_owned();
+    let action_data = action_data.to_owned();
     let alpm_package_name = alpm_package_name.to_owned();
     // Spawn child process in separate thread.
     std::thread::spawn(move || {
@@ -112,6 +115,13 @@ fn toggle_service(
             }
         }
         utils::run_cmd(cmd, run_as_root).unwrap();
+
+        if action_enabled && action_type == "user_service" {
+            if tweak::is_globally_enabled(&action_data) {
+                let _ = utils::run_cmd(format!("systemctl --global disable {action_data}"), false);
+            }
+            tweak::remove_autostart_files(tweak_name);
+        }
 
         if action_type == "user_service" {
             systemd_units::refresh_user_cache();
