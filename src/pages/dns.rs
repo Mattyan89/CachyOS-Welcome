@@ -5,7 +5,8 @@ use gtk::prelude::*;
 
 use gtk::{glib, Builder};
 
-/// Returns true if `s` contains only valid DNS address characters (hex digits, dots, colons, commas).
+/// Returns true if `s` contains only valid DNS address characters (hex digits, dots, colons,
+/// commas).
 fn is_valid_dns_input(s: &str) -> bool {
     !s.is_empty() && s.chars().all(|c| c.is_ascii_hexdigit() || matches!(c, '.' | ':' | ','))
 }
@@ -45,17 +46,14 @@ fn selection_index_for_connection(conn_name: &str) -> usize {
     dns::G_DNS_SERVERS.get_index("Cloudflare").unwrap()
 }
 
-/// Returns whether the server at `index` supports DoT.
+/// Returns whether the server at `index` supports `DoT`.
 fn server_supports_dot(index: usize) -> bool {
     dns::G_DNS_SERVERS.entries().nth(index).is_some_and(|(_, (_, _, dot))| dot.is_some())
 }
 
-/// Returns whether the server at `index` supports DoH.
+/// Returns whether the server at `index` supports `DoH`.
 fn server_supports_doh(index: usize) -> bool {
-    dns::G_DNS_SERVERS
-        .entries()
-        .nth(index)
-        .is_some_and(|(name, _)| dns::server_supports_doh(name))
+    dns::G_DNS_SERVERS.entries().nth(index).is_some_and(|(name, _)| dns::server_supports_doh(name))
 }
 
 /// Returns (region, homepage) for the server at `index`.
@@ -250,7 +248,7 @@ fn create_connections_section() -> gtk::Box {
                     let dot_enabled = actions::get_dot_for_connection(&active_conn_name);
                     dot_check.set_active(dot_enabled);
                 }
-                custom_box.foreach(|w| w.show_all());
+                custom_box.foreach(gtk::prelude::WidgetExt::show_all);
                 custom_box.show();
                 dot_check.set_sensitive(true);
                 doh_check.set_sensitive(true);
@@ -277,7 +275,7 @@ fn create_connections_section() -> gtk::Box {
         if let Some(idx) = combo.active() {
             let is_custom = idx as usize == dns::G_DNS_SERVERS.len();
             if is_custom {
-                custom_box_vis.foreach(|w| w.show_all());
+                custom_box_vis.foreach(gtk::prelude::WidgetExt::show_all);
                 custom_box_vis.show();
             } else {
                 custom_box_vis.hide();
@@ -350,12 +348,13 @@ fn create_connections_section() -> gtk::Box {
     let latency_btn_clone = latency_btn.clone();
     let (latency_tx, latency_rx) = glib::MainContext::channel(glib::Priority::default());
     latency_btn.connect_clicked(move |_| {
-        let is_custom = combo_serv_latency.active().is_some_and(|idx| {
-            idx as usize == dns::G_DNS_SERVERS.len()
-        });
+        let is_custom =
+            combo_serv_latency.active().is_some_and(|idx| idx as usize == dns::G_DNS_SERVERS.len());
         let ipv4 = if is_custom {
             let text = custom_ipv4_entry_latency.text().trim().to_string();
-            if text.is_empty() { return; }
+            if text.is_empty() {
+                return;
+            }
             text
         } else {
             let server_name: String =
@@ -386,14 +385,17 @@ fn create_connections_section() -> gtk::Box {
     let combo_serv_best = combo_servers.clone();
     let best_btn_clone = best_btn.clone();
     let latency_label_best = latency_label.clone();
-    let (best_tx, best_rx) = glib::MainContext::channel::<Option<(&'static str, u128)>>(glib::Priority::default());
+    let (best_tx, best_rx) =
+        glib::MainContext::channel::<Option<(&'static str, u128)>>(glib::Priority::default());
     best_btn.connect_clicked(move |_| {
         let tx = best_tx.clone();
         best_btn_clone.set_sensitive(false);
         latency_label_best.set_text(&fl!("latency-testing"));
         std::thread::spawn(move || {
             let results = dns::measure_all_latencies();
-            let best = results.iter().find(|(n, ms)| ms.is_some() && !dns::is_filtering_server(n))
+            let best = results
+                .iter()
+                .find(|(n, ms)| ms.is_some() && !dns::is_filtering_server(n))
                 .map(|&(name, ms)| (name, ms.unwrap()));
             let _ = tx.send(best);
         });
@@ -433,9 +435,8 @@ fn create_connections_section() -> gtk::Box {
     let doh_check_clone3 = doh_check.clone();
     apply_btn.connect_clicked(move |_| {
         let conn_name: String = combo_conn_clone.active_text().map(Into::into).unwrap_or_default();
-        let is_custom = combo_serv_clone.active().is_some_and(|idx| {
-            idx as usize == dns::G_DNS_SERVERS.len()
-        });
+        let is_custom =
+            combo_serv_clone.active().is_some_and(|idx| idx as usize == dns::G_DNS_SERVERS.len());
         let enable_dot = dot_check_clone3.is_active();
         let enable_doh = doh_check_clone3.is_active();
 
@@ -485,7 +486,8 @@ fn create_connections_section() -> gtk::Box {
                     });
                     return;
                 }
-                let dot_host = if dot_hostname.is_empty() { None } else { Some(dot_hostname.clone()) };
+                let dot_host =
+                    if dot_hostname.is_empty() { None } else { Some(dot_hostname.clone()) };
                 (custom_doh_url, ipv4.clone(), ipv6.clone(), dot_host)
             } else {
                 let server_name: String =

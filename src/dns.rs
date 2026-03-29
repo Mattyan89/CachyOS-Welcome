@@ -1,7 +1,7 @@
 use clap::{Subcommand, ValueEnum};
 use phf::{phf_map, phf_ordered_map};
 
-/// DNS server entry: (IPv4 addresses, IPv6 addresses, optional DoT hostname)
+/// DNS server entry: (IPv4 addresses, IPv6 addresses, optional `DoT` hostname)
 pub type DnsEntry = (&'static str, &'static str, Option<&'static str>);
 
 /// Extra metadata for each DNS server (region, homepage URL, filtering variant).
@@ -11,7 +11,7 @@ pub struct DnsServerInfo {
     pub is_filtering: bool,
 }
 
-/// DoH URL for servers that support DNS over HTTPS.
+/// `DoH` URL for servers that support DNS over HTTPS.
 pub static G_DNS_DOH_URLS: phf::Map<&'static str, &'static str> = phf_map! {
     "AdGuard" => "https://dns.adguard-dns.com/dns-query",
     "AdGuard Family Protection" => "https://family.adguard-dns.com/dns-query",
@@ -79,11 +79,11 @@ pub enum DnsAction {
         #[clap(short, long, value_enum)]
         server: DnsServer,
 
-        /// Enable DNS over TLS (DoT) for the connection (requires server support)
+        /// Enable DNS over TLS (`DoT`) for the connection (requires server support)
         #[clap(long)]
         dot: bool,
 
-        /// Enable DNS over HTTPS (DoH) via blocky local proxy (requires server support)
+        /// Enable DNS over HTTPS (`DoH`) via blocky local proxy (requires server support)
         #[clap(long, conflicts_with = "dot")]
         doh: bool,
     },
@@ -101,19 +101,19 @@ pub enum DnsAction {
         #[clap(long, value_name = "ADDRS", default_value = "")]
         ipv6: String,
 
-        /// Enable DNS over TLS (DoT)
+        /// Enable DNS over TLS (`DoT`)
         #[clap(long)]
         dot: bool,
 
-        /// DoT hostname for SNI (e.g. "dns.example.com")
+        /// `DoT` hostname for SNI (e.g. "dns.example.com")
         #[clap(long, value_name = "HOSTNAME", default_value = "")]
         dot_hostname: String,
 
-        /// Enable DNS over HTTPS (DoH) via blocky local proxy
+        /// Enable DNS over HTTPS (`DoH`) via blocky local proxy
         #[clap(long, conflicts_with = "dot")]
         doh: bool,
 
-        /// DoH URL (e.g. "https://dns.example.com/dns-query")
+        /// `DoH` URL (e.g. "<https://dns.example.com/dns-query>")
         #[clap(long, value_name = "URL", default_value = "")]
         doh_url: String,
     },
@@ -195,11 +195,7 @@ pub fn append_dot_hostname(addrs: &str, hostname: &str) -> String {
     if addrs.is_empty() {
         return String::new();
     }
-    addrs
-        .split(',')
-        .map(|addr| format!("{addr}#{hostname}"))
-        .collect::<Vec<_>>()
-        .join(",")
+    addrs.split(',').map(|addr| format!("{addr}#{hostname}")).collect::<Vec<_>>().join(",")
 }
 
 /// Returns true if `hostname` is a valid SNI/DoT hostname.
@@ -210,11 +206,7 @@ pub fn is_valid_dot_hostname(hostname: &str) -> bool {
         return false;
     }
     for label in hostname.split('.') {
-        if label.is_empty()
-            || label.len() > 63
-            || label.starts_with('-')
-            || label.ends_with('-')
-        {
+        if label.is_empty() || label.len() > 63 || label.starts_with('-') || label.ends_with('-') {
             return false;
         }
         if !label.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
@@ -229,7 +221,7 @@ pub fn is_filtering_server(name: &str) -> bool {
     G_DNS_SERVER_INFO.get(name).is_some_and(|info| info.is_filtering)
 }
 
-/// Measure latency for all DNS servers. Returns a Vec of (name, latency_ms or None).
+/// Measure latency for all DNS servers. Returns a Vec of (name, `latency_ms` or None).
 pub fn measure_all_latencies() -> Vec<(&'static str, Option<u128>)> {
     use std::sync::mpsc;
     use std::thread;
@@ -237,7 +229,7 @@ pub fn measure_all_latencies() -> Vec<(&'static str, Option<u128>)> {
     let (tx, rx) = mpsc::channel();
     let mut count = 0;
 
-    for (name, (ipv4, _, _)) in G_DNS_SERVERS.entries() {
+    for (name, (ipv4, ..)) in G_DNS_SERVERS.entries() {
         let tx = tx.clone();
         let ipv4 = ipv4.to_string();
         let name: &'static str = name;
@@ -259,12 +251,12 @@ pub fn measure_all_latencies() -> Vec<(&'static str, Option<u128>)> {
     results
 }
 
-/// Returns the DoH URL for a given server name, if it supports DoH.
+/// Returns the `DoH` URL for a given server name, if it supports `DoH`.
 pub fn get_doh_url(server_name: &str) -> Option<&'static str> {
     G_DNS_DOH_URLS.get(server_name).copied()
 }
 
-/// Returns true if the named server supports DoH.
+/// Returns true if the named server supports `DoH`.
 pub fn server_supports_doh(server_name: &str) -> bool {
     G_DNS_DOH_URLS.contains_key(server_name)
 }
@@ -272,34 +264,33 @@ pub fn server_supports_doh(server_name: &str) -> bool {
 pub const BLOCKY_CONFIG_PATH: &str = "/etc/blocky/blocky.yml";
 pub const BLOCKY_SERVICE: &str = "blocky.service";
 
-/// Generate a blocky blocky.yml for DoH with bootstrap DNS.
-/// `doh_url` is e.g. "https://cloudflare-dns.com/dns-query"
+/// Generate a blocky blocky.yml for `DoH` with bootstrap DNS.
+/// `doh_url` is e.g. "<https://cloudflare-dns.com/dns-query>"
 /// `bootstrap_ipv4` is the plaintext IPv4 IPs, e.g. "1.1.1.1,1.0.0.1"
-/// `bootstrap_ipv6` is the plaintext IPv6 IPs, e.g. "2606:4700:4700::1111,2606:4700:4700::1001"
-/// `dot_hostname` is the optional DoT hostname — if provided, bootstrap uses DoT instead of plaintext.
-pub fn generate_blocky_config(doh_url: &str, bootstrap_ipv4: &str, bootstrap_ipv6: &str, dot_hostname: Option<&str>) -> String {
+/// `bootstrap_ipv6` is the plaintext IPv6 IPs, e.g. "`2606:4700:4700::1111,2606:4700:4700::1001`"
+/// `dot_hostname` is the optional `DoT` hostname — if provided, bootstrap uses `DoT` instead of
+/// plaintext.
+pub fn generate_blocky_config(
+    doh_url: &str,
+    bootstrap_ipv4: &str,
+    bootstrap_ipv6: &str,
+    dot_hostname: Option<&str>,
+) -> String {
     // Collect all bootstrap IPs (v4 + v6), filtering out empty strings
     let mut all_ips: Vec<&str> = bootstrap_ipv4.split(',').filter(|s| !s.is_empty()).collect();
     all_ips.extend(bootstrap_ipv6.split(',').filter(|s| !s.is_empty()));
 
     let bootstrap_section = match dot_hostname {
         Some(host) => {
-            let ips = all_ips
-                .iter()
-                .map(|ip| format!("      - \"{ip}\""))
-                .collect::<Vec<_>>()
-                .join("\n");
-            format!(
-                "  - upstream: tcp-tls:{host}\n    ips:\n{ips}"
-            )
+            let ips =
+                all_ips.iter().map(|ip| format!("      - \"{ip}\"")).collect::<Vec<_>>().join("\n");
+            format!("  - upstream: tcp-tls:{host}\n    ips:\n{ips}")
         },
-        None => {
-            all_ips
-                .iter()
-                .map(|ip| format!("  - upstream: \"{ip}\""))
-                .collect::<Vec<_>>()
-                .join("\n")
-        },
+        None => all_ips
+            .iter()
+            .map(|ip| format!("  - upstream: \"{ip}\""))
+            .collect::<Vec<_>>()
+            .join("\n"),
     };
 
     format!(
@@ -328,7 +319,7 @@ caching:
     )
 }
 
-/// Read the active DoH URL from blocky's config file, if present.
+/// Read the active `DoH` URL from blocky's config file, if present.
 /// Returns the `https://...` upstream URL, or None if not our config.
 pub fn read_active_doh_url() -> Option<String> {
     let config = std::fs::read_to_string(BLOCKY_CONFIG_PATH).ok()?;
@@ -345,8 +336,8 @@ pub fn read_active_doh_url() -> Option<String> {
     None
 }
 
-/// Given an active DoH URL, find which preset server it belongs to.
-/// Returns the index into G_DNS_SERVERS, or None if it's a custom URL.
+/// Given an active `DoH` URL, find which preset server it belongs to.
+/// Returns the index into `G_DNS_SERVERS`, or None if it's a custom URL.
 pub fn find_server_by_doh_url(doh_url: &str) -> Option<usize> {
     for (idx, (name, _)) in G_DNS_SERVERS.entries().enumerate() {
         if let Some(url) = G_DNS_DOH_URLS.get(name) {
@@ -359,7 +350,7 @@ pub fn find_server_by_doh_url(doh_url: &str) -> Option<usize> {
 }
 
 /// Read bootstrap DNS info from blocky's config.
-/// Returns (ipv4_addrs, ipv6_addrs, dot_hostname) parsed from the bootstrapDns section.
+/// Returns (`ipv4_addrs`, `ipv6_addrs`, `dot_hostname`) parsed from the bootstrapDns section.
 pub fn read_blocky_bootstrap() -> (String, String, Option<String>) {
     let config = match std::fs::read_to_string(BLOCKY_CONFIG_PATH) {
         Ok(c) => c,
@@ -378,7 +369,12 @@ pub fn read_blocky_bootstrap() -> (String, String, Option<String>) {
             in_bootstrap = true;
             continue;
         }
-        if in_bootstrap && !trimmed.is_empty() && !trimmed.starts_with('-') && !trimmed.starts_with("ips:") && !line.starts_with(' ') {
+        if in_bootstrap
+            && !trimmed.is_empty()
+            && !trimmed.starts_with('-')
+            && !trimmed.starts_with("ips:")
+            && !line.starts_with(' ')
+        {
             // Left the bootstrap section
             break;
         }

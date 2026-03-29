@@ -31,7 +31,7 @@ pub fn get_active_connection_name() -> Option<String> {
     active_conns.lines().next().map(String::from)
 }
 
-/// DNS info returned from NetworkManager: (ipv4_addrs, ipv6_addrs, optional DoT hostname).
+/// DNS info returned from `NetworkManager`: (`ipv4_addrs`, `ipv6_addrs`, optional `DoT` hostname).
 /// The hostname is extracted from the NM `address#hostname` notation.
 pub struct DnsInfo {
     pub ipv4: String,
@@ -129,12 +129,11 @@ pub fn change_dns_server(
     let dot_value = if enable_dot { 2 } else { 0 };
     let status_code = utils::run_cmd(
         format!(
-            "nmcli con mod '{conn_name}' ipv4.dns '{ipv4_with_sni}' && \
-             nmcli con mod '{conn_name}' ipv4.dns-priority -1 && \
-             nmcli con mod '{conn_name}' ipv6.dns '{ipv6_with_sni}' && \
-             nmcli con mod '{conn_name}' ipv6.dns-priority -1 && \
-             nmcli con mod '{conn_name}' connection.dns-over-tls {dot_value} && \
-             systemctl restart NetworkManager"
+            "nmcli con mod '{conn_name}' ipv4.dns '{ipv4_with_sni}' && nmcli con mod \
+             '{conn_name}' ipv4.dns-priority -1 && nmcli con mod '{conn_name}' ipv6.dns \
+             '{ipv6_with_sni}' && nmcli con mod '{conn_name}' ipv6.dns-priority -1 && nmcli con \
+             mod '{conn_name}' connection.dns-over-tls {dot_value} && systemctl restart \
+             NetworkManager"
         ),
         true,
     )
@@ -195,7 +194,7 @@ pub fn reset_dns_server(conn_name: &str, dialog_tx: Sender<DialogMessage>) {
     }
 }
 
-/// Set DNS to use DoH via blocky local proxy.
+/// Set DNS to use `DoH` via blocky local proxy.
 /// Installs blocky if needed, writes its config, starts the service, and points NM to 127.0.0.1.
 pub fn change_dns_server_doh(
     callback: RunCmdCallback,
@@ -256,10 +255,8 @@ pub fn change_dns_server_doh(
              nmcli con mod '{conn}' ipv4.ignore-auto-dns yes && \\
              nmcli con mod '{conn}' ipv6.dns '::1' && \\
              nmcli con mod '{conn}' ipv6.ignore-auto-dns yes && \\
-             nmcli con mod '{conn}' connection.dns-over-tls 0 && \
-             systemctl restart NetworkManager && \
-             sleep 1 && \
-             systemctl restart {blocky}",
+             nmcli con mod '{conn}' connection.dns-over-tls 0 && systemctl restart NetworkManager \
+             && sleep 1 && systemctl restart {blocky}",
             blocky = dns::BLOCKY_SERVICE,
         ),
         true,
@@ -285,20 +282,16 @@ pub fn change_dns_server_doh(
     }
 }
 
-/// Stop blocky if it's running (used during reset or when switching away from DoH).
+/// Stop blocky if it's running (used during reset or when switching away from `DoH`).
 pub fn stop_blocky() {
-    let (cmd, run_as_root) =
-        utils::get_tweak_toggle_cmd("service", dns::BLOCKY_SERVICE, true);
+    let (cmd, run_as_root) = utils::get_tweak_toggle_cmd("service", dns::BLOCKY_SERVICE, true);
     let _ = utils::run_cmd(cmd, run_as_root);
 }
 
 /// Returns true if blocky is currently active.
 pub fn is_blocky_active() -> bool {
-    utils::run_cmd(
-        format!("systemctl is-active --quiet {}", dns::BLOCKY_SERVICE),
-        false,
-    )
-    .is_ok_and(|s| s.success())
+    utils::run_cmd(format!("systemctl is-active --quiet {}", dns::BLOCKY_SERVICE), false)
+        .is_ok_and(subprocess::ExitStatus::success)
 }
 
 pub fn remove_dblock(dialog_tx: Sender<DialogMessage>) {

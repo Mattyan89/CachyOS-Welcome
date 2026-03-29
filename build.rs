@@ -50,7 +50,7 @@ fn gen_release_page() -> anyhow::Result<()> {
                 write_fallback_release_page();
             }
             return Ok(());
-        }
+        },
     };
 
     let mut reader = quick_xml::Reader::from_reader(rss_bytes.as_ref());
@@ -78,19 +78,17 @@ fn gen_release_page() -> anyhow::Result<()> {
                 } else if in_item {
                     current_tag = name;
                 }
-            }
-            Ok(quick_xml::events::Event::Text(ref e)) => {
-                if in_item {
-                    let text = String::from_utf8_lossy(e.as_ref()).to_string();
-                    match current_tag.as_str() {
-                        "title" => title = text,
-                        "link" => link = text,
-                        "description" => description = text,
-                        "pubDate" => pub_date = text,
-                        _ => {}
-                    }
+            },
+            Ok(quick_xml::events::Event::Text(ref e)) if in_item => {
+                let text = String::from_utf8_lossy(e.as_ref()).to_string();
+                match current_tag.as_str() {
+                    "title" => title = text,
+                    "link" => link = text,
+                    "description" => description = text,
+                    "pubDate" => pub_date = text,
+                    _ => {},
                 }
-            }
+            },
             Ok(quick_xml::events::Event::End(ref e)) => {
                 let name = String::from_utf8_lossy(e.name().as_ref()).to_string();
                 if name == "item" {
@@ -101,10 +99,10 @@ fn gen_release_page() -> anyhow::Result<()> {
                     in_item = false;
                 }
                 current_tag.clear();
-            }
+            },
             Ok(quick_xml::events::Event::Eof) => break,
             Err(e) => return Err(anyhow::anyhow!("XML parse error: {e}")),
-            _ => {}
+            _ => {},
         }
         buf.clear();
     }
@@ -116,16 +114,11 @@ fn gen_release_page() -> anyhow::Result<()> {
     }
 
     // Escape ampersands in description for valid Pango markup
-    let description = description
-        .replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;");
+    let description = description.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
 
     let content = format!(
-        "<big>{title}</big>\n\n\
-         {description}\n\n\
-         <i>{pub_date}</i>\n\n\
-         <a href=\"{link}\">For more details</a>"
+        "<big>{title}</big>\n\n{description}\n\n<i>{pub_date}</i>\n\n<a href=\"{link}\">For more \
+         details</a>"
     );
 
     fs::create_dir_all("data/pages/en")?;

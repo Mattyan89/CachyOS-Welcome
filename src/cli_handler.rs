@@ -93,14 +93,29 @@ pub fn handle_dns_command(action: DnsAction) -> Result<()> {
                     );
                     println!("Setting DNS without DoH...");
                     let dot_hostname = server_addr.2.unwrap_or("");
-                    actions::change_dns_server(&connection, server_addr.0, server_addr.1, false, dot_hostname, tx);
+                    actions::change_dns_server(
+                        &connection,
+                        server_addr.0,
+                        server_addr.1,
+                        false,
+                        dot_hostname,
+                        tx,
+                    );
                 } else {
                     println!(
                         "Setting DNS for '{}' to '{}' (DoH enabled via blocky)...",
                         connection.cyan(),
                         server_name.cyan(),
                     );
-                    actions::change_dns_server_doh(crate::cli::run_command, &connection, doh_url.unwrap(), server_addr.0, server_addr.1, server_addr.2, tx);
+                    actions::change_dns_server_doh(
+                        crate::cli::run_command,
+                        &connection,
+                        doh_url.unwrap(),
+                        server_addr.0,
+                        server_addr.1,
+                        server_addr.2,
+                        tx,
+                    );
                 }
             } else {
                 // Stop blocky if switching away from DoH
@@ -125,7 +140,14 @@ pub fn handle_dns_command(action: DnsAction) -> Result<()> {
                     server_name.cyan(),
                     dot_label
                 );
-                actions::change_dns_server(&connection, server_addr.0, server_addr.1, enable_dot, dot_hostname, tx);
+                actions::change_dns_server(
+                    &connection,
+                    server_addr.0,
+                    server_addr.1,
+                    enable_dot,
+                    dot_hostname,
+                    tx,
+                );
             }
         },
         DnsAction::SetCustom { connection, ipv4, ipv6, dot, dot_hostname, doh, doh_url } => {
@@ -144,15 +166,29 @@ pub fn handle_dns_command(action: DnsAction) -> Result<()> {
                     std::process::exit(1);
                 }
                 println!(
-                    "Setting custom DoH DNS for '{}': URL='{}' (bootstrap: IPv4='{}' IPv6='{}'{})...",
+                    "Setting custom DoH DNS for '{}': URL='{}' (bootstrap: IPv4='{}' \
+                     IPv6='{}'{})...",
                     connection.cyan(),
                     doh_url.cyan(),
                     if ipv4.is_empty() { "(none)" } else { &ipv4 },
                     if ipv6.is_empty() { "(none)" } else { &ipv6 },
-                    if !dot_hostname.is_empty() { format!(" DoT bootstrap={dot_hostname}") } else { String::new() },
+                    if dot_hostname.is_empty() {
+                        String::new()
+                    } else {
+                        format!(" DoT bootstrap={dot_hostname}")
+                    },
                 );
-                let dot_host = if dot_hostname.is_empty() { None } else { Some(dot_hostname.as_str()) };
-                actions::change_dns_server_doh(crate::cli::run_command, &connection, &doh_url, &ipv4, &ipv6, dot_host, tx);
+                let dot_host =
+                    if dot_hostname.is_empty() { None } else { Some(dot_hostname.as_str()) };
+                actions::change_dns_server_doh(
+                    crate::cli::run_command,
+                    &connection,
+                    &doh_url,
+                    &ipv4,
+                    &ipv6,
+                    dot_host,
+                    tx,
+                );
             } else {
                 // Stop blocky if switching away from DoH
                 actions::stop_blocky();
@@ -162,7 +198,11 @@ pub fn handle_dns_command(action: DnsAction) -> Result<()> {
                     connection.cyan(),
                     if ipv4.is_empty() { "(none)" } else { &ipv4 },
                     if ipv6.is_empty() { "(none)" } else { &ipv6 },
-                    if !dot_hostname.is_empty() { format!(" hostname={}", dot_hostname) } else { String::new() },
+                    if dot_hostname.is_empty() {
+                        String::new()
+                    } else {
+                        format!(" hostname={dot_hostname}")
+                    },
                     dot_label,
                 );
                 actions::change_dns_server(&connection, &ipv4, &ipv6, dot, &dot_hostname, tx);
