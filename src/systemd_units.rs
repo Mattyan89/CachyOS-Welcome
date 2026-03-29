@@ -3,6 +3,13 @@ use std::sync::{LazyLock, Mutex};
 use tokio::runtime::Runtime;
 use tracing::error;
 
+/// Whether to operate on the system-wide or per-user systemd instance.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Scope {
+    System,
+    User,
+}
+
 static MANAGER: LazyLock<Mutex<SystemdUnitManager>> =
     LazyLock::new(|| Mutex::new(SystemdUnitManager::new()));
 
@@ -121,4 +128,79 @@ pub fn check_user_units(units_str: &str) -> bool {
 /// Checks if any units enabled
 pub fn check_any_units(units_str: &str) -> bool {
     MANAGER.lock().unwrap().any_enabled(units_str)
+}
+
+async fn connection_for_scope(scope: Scope) -> anyhow::Result<zbus::Connection> {
+    Ok(match scope {
+        Scope::System => zbus::Connection::system().await?,
+        Scope::User => zbus::Connection::session().await?,
+    })
+}
+
+/// Enable units and start them
+pub fn systemd_enable(units: &[&str], scope: Scope, force: bool) -> anyhow::Result<()> {
+    let rt = Runtime::new()?;
+    rt.block_on(async {
+        let conn = connection_for_scope(scope).await?;
+        let manager = zbus_systemd::systemd1::ManagerProxy::new(&conn).await?;
+        let files: Vec<String> = units.iter().map(|u| u.to_string()).collect();
+        manager.enable_unit_files(files, false, force).await?;
+        for unit in units {
+            manager.start_unit(unit.to_string(), "replace".into()).await?;
+        }
+        Ok(())
+    })
+}
+
+/// Stop units and disable them
+pub fn systemd_disable(units: &[&str], scope: Scope) -> anyhow::Result<()> {
+    let rt = Runtime::new()?;
+    rt.block_on(async {
+        let conn = connection_for_scope(scope).await?;
+        let manager = zbus_systemd::systemd1::ManagerProxy::new(&conn).await?;
+        for unit in units {
+            // NOTE: unit may already be inactive
+            let _ = manager.stop_unit(unit.to_string(), "replace".into()).await;
+        }
+        let files: Vec<String> = units.iter().map(|u| u.to_string()).collect();
+        manager.disable_unit_files(files, false).await?;
+        Ok(())
+    })
+}
+
+/// Restart a single unit
+pub fn systemd_restart(unit: &str, scope: Scope) -> anyhow::Result<()> {
+    let rt = Runtime::new()?;
+    rt.block_on(async {
+        let conn = connection_for_scope(scope).await?;
+        let manager = zbus_systemd::systemd1::ManagerProxy::new(&conn).await?;
+        manager.restart_unit(unit.to_string(), "replace".into()).await?;
+        Ok(())
+    })
+}
+
+/// Stop a single unit
+pub fn systemd_stop(unit: &str, scope: Scope) -> anyhow::Result<()> {
+    let rt = Runtime::new()?;
+    rt.block_on(async {
+        let conn = connection_for_scope(scope).await?;
+        let manager = zbus_systemd::systemd1::ManagerProxy::new(&conn).await?;
+        manager.stop_unit(unit.to_string(), "replace".into()).await?;
+        Ok(())
+    })
+}
+
+/// Check whether a unit is currently active.
+pub fn systemd_is_active(unit: &str, scope: Scope) -> anyhow::Result<bool> {
+    let rt = Runtime::new()?;
+    rt.block_on(async {
+        let conn = connection_for_scope(scope).await?;
+        let manager = zbus_systemd::systemd1::ManagerProxy::new(&conn).await?;
+        let path = manager.get_unit(unit.to_string()).await?;
+        let unit_proxy = zbus_systemd::systemd1::UnitProxy::builder(&conn)
+            .path(path)?
+            .build()
+            .await?;
+        Ok(unit_proxy.active_state().await? == "active")
+    })
 }
