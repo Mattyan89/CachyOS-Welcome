@@ -1,3 +1,4 @@
+use crate::systemd_units::Scope;
 use crate::ui::{Action, DialogMessage, MessageType, RunCmdCallback};
 use crate::{dns, fl, kwin_dbus, systemd_units, utils, PacmanWrapper};
 
@@ -7,6 +8,17 @@ use std::path::Path;
 use gtk::glib::Sender;
 use subprocess::{Exec, Redirection};
 use tracing::error;
+
+/// Run a single `nmcli con mod` command.  Arguments are passed directly via
+/// execvp — no shell, no quoting issues, connection names with special
+/// characters are safe.
+fn nmcli_mod(conn_name: &str, property: &str, value: &str) -> anyhow::Result<()> {
+    let status = Exec::cmd("/sbin/nmcli")
+        .args(&["con", "mod", conn_name, property, value])
+        .join()?;
+    anyhow::ensure!(status.success(), "nmcli con mod {property} failed");
+    Ok(())
+}
 
 pub fn get_nm_connections() -> Vec<String> {
     let connections = Exec::cmd("/sbin/nmcli")
@@ -127,18 +139,16 @@ pub fn change_dns_server(
 
     // dns-over-tls: -1 = default, 0 = no, 1 = opportunistic, 2 = yes (strict)
     let dot_value = if enable_dot { 2 } else { 0 };
-    let status_code = utils::run_cmd(
-        format!(
-            "nmcli con mod '{conn_name}' ipv4.dns '{ipv4_with_sni}' && nmcli con mod \
-             '{conn_name}' ipv4.dns-priority -1 && nmcli con mod '{conn_name}' ipv6.dns \
-             '{ipv6_with_sni}' && nmcli con mod '{conn_name}' ipv6.dns-priority -1 && nmcli con \
-             mod '{conn_name}' connection.dns-over-tls {dot_value} && systemctl restart \
-             NetworkManager"
-        ),
-        true,
-    )
-    .unwrap();
-    if status_code.success() {
+    let result = (|| -> anyhow::Result<()> {
+        nmcli_mod(conn_name, "ipv4.dns", &ipv4_with_sni)?;
+        nmcli_mod(conn_name, "ipv4.dns-priority", "-1")?;
+        nmcli_mod(conn_name, "ipv6.dns", &ipv6_with_sni)?;
+        nmcli_mod(conn_name, "ipv6.dns-priority", "-1")?;
+        nmcli_mod(conn_name, "connection.dns-over-tls", &dot_value.to_string())?;
+        systemd_units::systemd_restart("NetworkManager.service", Scope::System)?;
+        Ok(())
+    })();
+    if result.is_ok() {
         dialog_tx
             .send(DialogMessage {
                 msg: fl!("dns-server-changed"),
@@ -161,21 +171,18 @@ pub fn reset_dns_server(conn_name: &str, dialog_tx: Sender<DialogMessage>) {
     // Stop blocky if it was running (DoH mode)
     stop_blocky();
 
-    let conn = conn_name.replace('\'', "'\\'");
-    let status_code = utils::run_cmd(
-        format!(
-            "nmcli con mod '{conn}' ipv4.dns '' && nmcli con mod '{conn}' ipv6.dns '' \\
-             && nmcli con mod '{conn}' ipv4.dns-priority 0 \\
-             && nmcli con mod '{conn}' ipv6.dns-priority 0 \\
-             && nmcli con mod '{conn}' ipv4.ignore-auto-dns no \\
-             && nmcli con mod '{conn}' ipv6.ignore-auto-dns no \\
-             && nmcli con mod '{conn}' connection.dns-over-tls -1 \\
-             && systemctl restart NetworkManager"
-        ),
-        true,
-    )
-    .unwrap();
-    if status_code.success() {
+    let result = (|| -> anyhow::Result<()> {
+        nmcli_mod(conn_name, "ipv4.dns", "")?;
+        nmcli_mod(conn_name, "ipv6.dns", "")?;
+        nmcli_mod(conn_name, "ipv4.dns-priority", "0")?;
+        nmcli_mod(conn_name, "ipv6.dns-priority", "0")?;
+        nmcli_mod(conn_name, "ipv4.ignore-auto-dns", "no")?;
+        nmcli_mod(conn_name, "ipv6.ignore-auto-dns", "no")?;
+        nmcli_mod(conn_name, "connection.dns-over-tls", "-1")?;
+        systemd_units::systemd_restart("NetworkManager.service", Scope::System)?;
+        Ok(())
+    })();
+    if result.is_ok() {
         dialog_tx
             .send(DialogMessage {
                 msg: fl!("dns-server-reset"),
@@ -223,17 +230,17 @@ pub fn change_dns_server_doh(
     // 2. Generate and write blocky config
     let config = dns::generate_blocky_config(doh_url, bootstrap_ipv4, bootstrap_ipv6, dot_hostname);
 
-    let escaped_config = config.replace('\'', "'\\''");
-    let write_status = utils::run_cmd(
-        format!(
-            "mkdir -p /etc/blocky && printf '%s' '{}' > {}",
-            escaped_config,
-            dns::BLOCKY_CONFIG_PATH,
-        ),
-        true,
-    )
-    .unwrap();
-    if !write_status.success() {
+    let write_result = (|| -> anyhow::Result<()> {
+        Exec::cmd("/sbin/pkexec").args(&["mkdir", "-p", "/etc/blocky"]).join()?;
+        let status = Exec::cmd("/sbin/pkexec")
+            .args(&["tee", dns::BLOCKY_CONFIG_PATH])
+            .stdin(config.as_str())
+            .stdout(Redirection::None)
+            .join()?;
+        anyhow::ensure!(status.success(), "failed to write blocky config");
+        Ok(())
+    })();
+    if write_result.is_err() {
         dialog_tx
             .send(DialogMessage {
                 msg: fl!("dns-server-failed"),
@@ -247,23 +254,20 @@ pub fn change_dns_server_doh(
     // 3. Configure NM, restart NM, then (re)start blocky once network is back
     // Use ignore-auto-dns to ensure all DNS goes through blocky — DHCP DNS
     // would bypass the encrypted proxy. LAN names still work via mDNS/LLMNR.
-    let conn = conn_name.replace('\'', "'\\'");
-    let status_code = utils::run_cmd(
-        format!(
-            "systemctl enable {blocky} && \\
-             nmcli con mod '{conn}' ipv4.dns '127.0.0.1' && \\
-             nmcli con mod '{conn}' ipv4.ignore-auto-dns yes && \\
-             nmcli con mod '{conn}' ipv6.dns '::1' && \\
-             nmcli con mod '{conn}' ipv6.ignore-auto-dns yes && \\
-             nmcli con mod '{conn}' connection.dns-over-tls 0 && systemctl restart NetworkManager \
-             && sleep 1 && systemctl restart {blocky}",
-            blocky = dns::BLOCKY_SERVICE,
-        ),
-        true,
-    )
-    .unwrap();
+    let result = (|| -> anyhow::Result<()> {
+        systemd_units::systemd_enable(&[dns::BLOCKY_SERVICE], Scope::System, false)?;
+        nmcli_mod(conn_name, "ipv4.dns", "127.0.0.1")?;
+        nmcli_mod(conn_name, "ipv4.ignore-auto-dns", "yes")?;
+        nmcli_mod(conn_name, "ipv6.dns", "::1")?;
+        nmcli_mod(conn_name, "ipv6.ignore-auto-dns", "yes")?;
+        nmcli_mod(conn_name, "connection.dns-over-tls", "0")?;
+        systemd_units::systemd_restart("NetworkManager.service", Scope::System)?;
+        std::thread::sleep(std::time::Duration::from_secs(1));
+        systemd_units::systemd_restart(dns::BLOCKY_SERVICE, Scope::System)?;
+        Ok(())
+    })();
 
-    if status_code.success() {
+    if result.is_ok() {
         dialog_tx
             .send(DialogMessage {
                 msg: fl!("dns-server-changed"),
