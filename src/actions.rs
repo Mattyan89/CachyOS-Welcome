@@ -4,7 +4,7 @@ use crate::{dns, fl, kwin_dbus, systemd_units, utils, PacmanWrapper};
 
 use std::path::Path;
 use std::time::Duration;
-use std::{env, thread};
+use std::{env, io, thread};
 
 use gtk::glib::Sender;
 use subprocess::Exec;
