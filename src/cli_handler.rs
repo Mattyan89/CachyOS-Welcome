@@ -9,8 +9,6 @@ use anyhow::Result;
 use colored::Colorize;
 use gtk::glib;
 
-use subprocess::Exec;
-
 pub fn handle_fix_command(action: FixAction) -> Result<()> {
     let (tx, rx) = glib::MainContext::channel(glib::Priority::default());
 
@@ -271,7 +269,7 @@ pub fn handle_launch_command(app: AppToLaunch) -> Result<()> {
 
     match which::which(bin_name) {
         Ok(path) => {
-            Exec::cmd(path).detached().join()?;
+            utils::spawn_detached(path.to_str().unwrap())?;
             println!("{app_name} launched successfully.");
         },
         Err(_) => {

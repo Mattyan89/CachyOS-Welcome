@@ -2,11 +2,12 @@ use crate::systemd_units::Scope;
 use crate::ui::{Action, DialogMessage, MessageType, RunCmdCallback};
 use crate::{dns, fl, kwin_dbus, systemd_units, utils, PacmanWrapper};
 
-use std::env;
 use std::path::Path;
+use std::time::Duration;
+use std::{env, thread};
 
 use gtk::glib::Sender;
-use subprocess::{Exec, Redirection};
+use subprocess::Exec;
 use tracing::error;
 
 fn nmcli_mod(conn_name: &str, property: &str, value: &str) -> anyhow::Result<()> {
@@ -17,24 +18,15 @@ fn nmcli_mod(conn_name: &str, property: &str, value: &str) -> anyhow::Result<()>
 }
 
 pub fn get_nm_connections() -> Vec<String> {
-    let connections = Exec::cmd("/sbin/nmcli")
-        .args(&["-t", "-f", "NAME", "connection", "show"])
-        .stdout(Redirection::Pipe)
-        .capture()
-        .unwrap()
-        .stdout_str();
+    let connections = utils::cmd_output("/sbin/nmcli", &["-t", "-f", "NAME", "connection", "show"]);
 
     // get list of connections separated by newline
     connections.split('\n').filter(|x| !x.is_empty()).map(String::from).collect::<Vec<_>>()
 }
 
 pub fn get_active_connection_name() -> Option<String> {
-    let active_conns = Exec::cmd("/sbin/nmcli")
-        .args(&["-g", "NAME", "connection", "show", "--active"])
-        .stdout(Redirection::Pipe)
-        .capture()
-        .unwrap()
-        .stdout_str();
+    let active_conns =
+        utils::cmd_output("/sbin/nmcli", &["-g", "NAME", "connection", "show", "--active"]);
 
     active_conns.lines().next().map(String::from)
 }
@@ -48,12 +40,8 @@ pub struct DnsInfo {
 }
 
 pub fn get_dns_for_connection(conn_name: &str) -> Option<DnsInfo> {
-    let ips = Exec::cmd("/sbin/nmcli")
-        .args(&["-g", "ipv4.dns,ipv6.dns", "con", "show", conn_name])
-        .stdout(Redirection::Pipe)
-        .capture()
-        .unwrap()
-        .stdout_str();
+    let ips =
+        utils::cmd_output("/sbin/nmcli", &["-g", "ipv4.dns,ipv6.dns", "con", "show", conn_name]);
 
     let mut lines = ips.lines();
     let raw_ipv4 = lines.next().unwrap_or("").to_owned();
@@ -90,19 +78,19 @@ pub fn get_dns_for_connection(conn_name: &str) -> Option<DnsInfo> {
 
 /// Returns true if DNS-over-TLS is enabled (strict mode) for the given connection.
 pub fn get_dot_for_connection(conn_name: &str) -> bool {
-    let output = Exec::cmd("/sbin/nmcli")
-        .args(&["-g", "connection.dns-over-tls", "con", "show", conn_name])
-        .stdout(Redirection::Pipe)
-        .capture()
-        .unwrap()
-        .stdout_str();
+    let output = utils::cmd_output("/sbin/nmcli", &[
+        "-g",
+        "connection.dns-over-tls",
+        "con",
+        "show",
+        conn_name,
+    ]);
     // value 2 = strict DoT
     output.trim() == "2"
 }
 
 fn get_user_groups() -> Vec<String> {
-    let groups =
-        Exec::cmd("/sbin/groups").stdout(Redirection::Pipe).capture().unwrap().stdout_str();
+    let groups = utils::cmd_output("/sbin/groups", &[]);
     groups.split('\n').filter(|x| !x.is_empty()).map(String::from).collect::<Vec<_>>()
 }
 
@@ -227,12 +215,14 @@ pub fn change_dns_server_doh(
     let config = dns::generate_blocky_config(doh_url, bootstrap_ipv4, bootstrap_ipv6, dot_hostname);
 
     let write_result = (|| -> anyhow::Result<()> {
-        Exec::cmd("/sbin/pkexec").args(&["mkdir", "-p", "/etc/blocky"]).join()?;
-        let status = Exec::cmd("/sbin/pkexec")
-            .args(&["tee", dns::BLOCKY_CONFIG_PATH])
-            .stdin(config.as_str())
-            .stdout(Redirection::None)
-            .join()?;
+        let mut tmp = tempfile::NamedTempFile::new()?;
+        io::Write::write_all(&mut tmp, config.as_bytes())?;
+        let status = utils::pkexec_cmd(&[
+            "install",
+            "-Dm644",
+            tmp.path().to_str().unwrap(),
+            dns::BLOCKY_CONFIG_PATH,
+        ])?;
         anyhow::ensure!(status.success(), "failed to write blocky config");
         Ok(())
     })();
@@ -258,7 +248,7 @@ pub fn change_dns_server_doh(
         nmcli_mod(conn_name, "ipv6.ignore-auto-dns", "yes")?;
         nmcli_mod(conn_name, "connection.dns-over-tls", "0")?;
         systemd_units::systemd_restart("NetworkManager.service", Scope::System)?;
-        std::thread::sleep(std::time::Duration::from_secs(1));
+        thread::sleep(Duration::from_secs(1));
         systemd_units::systemd_restart(dns::BLOCKY_SERVICE, Scope::System)?;
         Ok(())
     })();
@@ -295,7 +285,7 @@ pub fn is_blocky_active() -> bool {
 
 pub fn remove_dblock(dialog_tx: Sender<DialogMessage>) {
     if Path::new("/var/lib/pacman/db.lck").exists() {
-        let _ = utils::run_cmd("rm /var/lib/pacman/db.lck".into(), true).unwrap();
+        let _ = utils::pkexec_cmd(&["rm", "/var/lib/pacman/db.lck"]);
         if !Path::new("/var/lib/pacman/db.lck").exists() {
             dialog_tx
                 .send(DialogMessage {
@@ -340,12 +330,7 @@ pub fn reinstall_packages(callback: RunCmdCallback) {
 
 pub fn remove_orphans(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage>) {
     // check if you have orphans packages.
-    let mut orphan_pkgs = Exec::cmd("/sbin/pacman")
-        .arg("-Qtdq")
-        .stdout(Redirection::Pipe)
-        .capture()
-        .unwrap()
-        .stdout_str();
+    let mut orphan_pkgs = utils::cmd_output("/sbin/pacman", &["-Qtdq"]);
 
     // get list of packages separated by space,
     // and check if it's empty or not.
@@ -452,9 +437,9 @@ pub fn install_winboat(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage
     let group_added = get_user_groups().iter().any(|x| x == "docker");
     if utils::is_alpm_pkg_installed("docker") && !group_added {
         if let Ok(current_user) = env::var("USER") {
-            let status_code =
-                utils::run_cmd(format!("/sbin/usermod -aG docker {current_user}"), true).unwrap();
-            if !status_code.success() {
+            let failed = utils::pkexec_cmd(&["/sbin/usermod", "-aG", "docker", &current_user])
+                .map_or(true, |s| !s.success());
+            if failed {
                 dialog_tx
                     .send(DialogMessage {
                         msg: fl!("winboat-install-failed"),

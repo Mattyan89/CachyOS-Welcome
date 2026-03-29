@@ -270,8 +270,7 @@ pub fn create_appbrowser_page(builder: &Builder) {
         std::thread::spawn(move || {
             // Get executable path.
             let exec_path = "/usr/bin/cachyos-pi";
-            let exit_status =
-                Exec::cmd(exec_path).detached().join().expect("Failed to spawn process");
+            let exit_status = utils::spawn_detached(exec_path).expect("Failed to spawn process");
 
             debug!("Exit status successfully? = {:?}", exit_status.success());
         });
@@ -320,7 +319,7 @@ fn on_appbtn_clicked(button: &gtk::Button) {
     std::thread::spawn(move || {
         // Get executable path.
         let exec_path = exec_path.unwrap().to_str().unwrap().to_owned();
-        let exit_status = Exec::cmd(exec_path).detached().join().expect("Failed to spawn process");
+        let exit_status = utils::spawn_detached(&exec_path).expect("Failed to spawn process");
 
         debug!("Exit status successfully? = {:?}", exit_status.success());
     });

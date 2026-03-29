@@ -6,7 +6,7 @@ use std::{fs, slice, str};
 
 use gtk::prelude::*;
 
-use subprocess::{Exec, ExitStatus};
+use subprocess::{Exec, ExitStatus, Redirection};
 
 #[derive(Debug)]
 pub enum PacmanWrapper {
@@ -136,6 +136,21 @@ pub fn run_cmd(cmd: String, escalate: bool) -> anyhow::Result<ExitStatus> {
     } else {
         Ok(Exec::cmd("/sbin/bash").arg("-c").arg(cmd).join()?)
     }
+}
+
+/// Run a command and capture its stdout. Args passed directly via execvp (no shell).
+pub fn cmd_output(cmd: &str, args: &[&str]) -> String {
+    Exec::cmd(cmd).args(args).stdout(Redirection::Pipe).capture().unwrap().stdout_str()
+}
+
+/// Run a command via pkexec. Args passed directly (no shell).
+pub fn pkexec_cmd(args: &[&str]) -> anyhow::Result<ExitStatus> {
+    Ok(Exec::cmd("/sbin/pkexec").args(args).join()?)
+}
+
+/// Spawn a detached child process.
+pub fn spawn_detached(path: &str) -> anyhow::Result<ExitStatus> {
+    Ok(Exec::cmd(path).detached().join()?)
 }
 
 #[inline]

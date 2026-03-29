@@ -143,7 +143,7 @@ pub fn systemd_enable(units: &[&str], scope: Scope, force: bool) -> anyhow::Resu
     rt.block_on(async {
         let conn = connection_for_scope(scope).await?;
         let manager = zbus_systemd::systemd1::ManagerProxy::new(&conn).await?;
-        let files: Vec<String> = units.iter().map(|u| u.to_string()).collect();
+        let files: Vec<String> = units.iter().map(std::string::ToString::to_string).collect();
         manager.enable_unit_files(files, false, force).await?;
         for unit in units {
             manager.start_unit(unit.to_string(), "replace".into()).await?;
@@ -162,7 +162,7 @@ pub fn systemd_disable(units: &[&str], scope: Scope) -> anyhow::Result<()> {
             // NOTE: unit may already be inactive
             let _ = manager.stop_unit(unit.to_string(), "replace".into()).await;
         }
-        let files: Vec<String> = units.iter().map(|u| u.to_string()).collect();
+        let files: Vec<String> = units.iter().map(std::string::ToString::to_string).collect();
         manager.disable_unit_files(files, false).await?;
         Ok(())
     })
