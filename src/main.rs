@@ -98,8 +98,8 @@ fn main() {
         gresource::init().expect("Could not load gresource file.");
 
         // Set program name.
-        glib::set_program_name("CachyOSHello".into());
-        glib::set_application_name("CachyOSHello");
+        glib::set_program_name("org.cachyos.hello".into());
+        glib::set_application_name("org.cachyos.hello");
 
         let application = gtk::Application::new(
             Some(APP_ID),       // Application id
