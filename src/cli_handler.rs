@@ -7,10 +7,9 @@ use crate::{actions, dns, systemd_units, utils};
 
 use anyhow::Result;
 use colored::Colorize;
-use gtk::glib;
 
 pub fn handle_fix_command(action: FixAction) -> Result<()> {
-    let (tx, rx) = glib::MainContext::channel(glib::Priority::default());
+    let (tx, rx) = async_channel::unbounded();
 
     match action {
         FixAction::UpdateSystem => {
@@ -57,11 +56,10 @@ pub fn handle_fix_command(action: FixAction) -> Result<()> {
         },
     }
 
-    rx.attach(None, move |msg| {
+    while let Ok(msg) = rx.try_recv() {
         let ui_comp = crate::cli::CLI::new();
         ui_comp.show_message(msg.msg_type, &msg.msg, msg.msg_type.to_string());
-        glib::ControlFlow::Continue
-    });
+    }
     Ok(())
 }
 
@@ -74,7 +72,7 @@ pub fn handle_tweak_command(action: TweakAction) -> Result<()> {
 }
 
 pub fn handle_dns_command(action: DnsAction) -> Result<()> {
-    let (tx, rx) = glib::MainContext::channel(glib::Priority::default());
+    let (tx, rx) = async_channel::unbounded();
 
     match action {
         DnsAction::Set { connection, server, dot, doh } => {
@@ -84,7 +82,22 @@ pub fn handle_dns_command(action: DnsAction) -> Result<()> {
             if doh {
                 // DoH mode via blocky
                 let doh_url = dns::get_doh_url(server_name);
-                if doh_url.is_none() {
+                if let Some(url) = doh_url {
+                    println!(
+                        "Setting DNS for '{}' to '{}' (DoH enabled via blocky)...",
+                        connection.cyan(),
+                        server_name.cyan(),
+                    );
+                    actions::change_dns_server_doh(
+                        crate::cli::run_command,
+                        &connection,
+                        url,
+                        server_addr.0,
+                        server_addr.1,
+                        server_addr.2,
+                        tx,
+                    );
+                } else {
                     println!(
                         "{}: DNS over HTTPS is not supported by '{}'.",
                         "Warning".yellow(),
@@ -98,21 +111,6 @@ pub fn handle_dns_command(action: DnsAction) -> Result<()> {
                         server_addr.1,
                         false,
                         dot_hostname,
-                        tx,
-                    );
-                } else {
-                    println!(
-                        "Setting DNS for '{}' to '{}' (DoH enabled via blocky)...",
-                        connection.cyan(),
-                        server_name.cyan(),
-                    );
-                    actions::change_dns_server_doh(
-                        crate::cli::run_command,
-                        &connection,
-                        doh_url.unwrap(),
-                        server_addr.0,
-                        server_addr.1,
-                        server_addr.2,
                         tx,
                     );
                 }
@@ -251,11 +249,10 @@ pub fn handle_dns_command(action: DnsAction) -> Result<()> {
             }
         },
     }
-    rx.attach(None, move |msg| {
+    while let Ok(msg) = rx.try_recv() {
         let ui_comp = crate::cli::CLI::new();
         ui_comp.show_message(msg.msg_type, &msg.msg, msg.msg_type.to_string());
-        glib::ControlFlow::Continue
-    });
+    }
     Ok(())
 }
 

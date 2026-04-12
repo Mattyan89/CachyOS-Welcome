@@ -47,7 +47,7 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
     let install_winboat_btn = create_gtk_button!("install-winboat-title");
 
     // Create context channel.
-    let (dialog_tx, dialog_rx) = glib::MainContext::channel(glib::Priority::default());
+    let (dialog_tx, dialog_rx) = async_channel::unbounded();
 
     // Connect signals.
     let dialog_tx_clone = dialog_tx.clone();
@@ -101,20 +101,21 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
     let remove_orphans_btn_clone = remove_orphans_btn.clone();
     let install_gaming_btn_clone = install_gaming_btn.clone();
     let install_winboat_btn_clone = install_winboat_btn.clone();
-    dialog_rx.attach(None, move |msg| {
-        let widget_obj = match msg.action {
-            Action::RemoveLock => &removelock_btn_clone,
-            Action::RemoveOrphans => &remove_orphans_btn_clone,
-            Action::InstallGaming => &install_gaming_btn_clone,
-            Action::InstallWinboat => &install_winboat_btn_clone,
-            _ => panic!("Unexpected action!!"),
-        };
-        let widget_window =
-            utils::get_window_from_widget(widget_obj).expect("Failed to retrieve window");
-        let ui_comp = crate::gui::GUI::new(widget_window);
+    glib::MainContext::default().spawn_local(async move {
+        while let Ok(msg) = dialog_rx.recv().await {
+            let widget_obj = match msg.action {
+                Action::RemoveLock => &removelock_btn_clone,
+                Action::RemoveOrphans => &remove_orphans_btn_clone,
+                Action::InstallGaming => &install_gaming_btn_clone,
+                Action::InstallWinboat => &install_winboat_btn_clone,
+                _ => panic!("Unexpected action!!"),
+            };
+            let widget_window =
+                utils::get_window_from_widget(widget_obj).expect("Failed to retrieve window");
+            let ui_comp = crate::gui::GUI::new(widget_window);
 
-        ui_comp.show_message(msg.msg_type, &msg.msg, msg.msg_type.to_string());
-        glib::ControlFlow::Continue
+            ui_comp.show_message(msg.msg_type, &msg.msg, msg.msg_type.to_string());
+        }
     });
 
     topbox.pack_start(&label, true, false, 1);
@@ -228,8 +229,8 @@ pub fn create_tweaks_page(builder: &Builder) {
     let child_name = "tweaksBrowserpage";
     options_section_box.set_widget_name(&format!("{child_name}_options"));
     fixes_section_box.set_widget_name(&format!("{child_name}_fixes"));
-    if apps_section_box_opt.is_some() {
-        apps_section_box_opt.as_ref().unwrap().set_widget_name(&format!("{child_name}_apps"));
+    if let Some(apps_section_box) = apps_section_box_opt.as_ref() {
+        apps_section_box.set_widget_name(&format!("{child_name}_apps"));
     }
 
     let grid = gtk::Grid::new();
