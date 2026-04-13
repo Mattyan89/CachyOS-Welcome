@@ -218,7 +218,8 @@ fn create_connections_section() -> gtk::Box {
 
             let selected_dns_index = selection_index_for_connection(&active_conn_name);
             let dhcp_index = dns::G_DNS_SERVERS.len() + 1;
-            let combo_index = if selected_dns_index == usize::MAX { dhcp_index } else { selected_dns_index };
+            let combo_index =
+                if selected_dns_index == usize::MAX { dhcp_index } else { selected_dns_index };
             combo_servers.set_active(Some(combo_index as u32));
 
             if selected_dns_index == usize::MAX {
@@ -455,9 +456,9 @@ fn create_connections_section() -> gtk::Box {
         let conn_name: String = combo_conn_clone.active_text().map(Into::into).unwrap_or_default();
         let is_custom =
             combo_serv_clone.active().is_some_and(|idx| idx as usize == dns::G_DNS_SERVERS.len());
-        let is_dhcp = combo_serv_clone.active().is_some_and(|idx| {
-            idx as usize == dns::G_DNS_SERVERS.len() + 1
-        });
+        let is_dhcp = combo_serv_clone
+            .active()
+            .is_some_and(|idx| idx as usize == dns::G_DNS_SERVERS.len() + 1);
 
         // DHCP (automatic) selected — reset to defaults
         if is_dhcp {
