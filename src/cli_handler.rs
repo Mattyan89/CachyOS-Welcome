@@ -54,6 +54,10 @@ pub fn handle_fix_command(action: FixAction) -> Result<()> {
             println!("{}", "Installing Winboat...".bold());
             actions::install_winboat(crate::cli::run_command, tx);
         },
+        FixAction::InstallGpuBoosters => {
+            println!("{}", "Installing GPU booster packages...".bold());
+            actions::install_gpu_boosters(crate::cli::run_command, tx);
+        },
     }
 
     while let Ok(msg) = rx.try_recv() {
