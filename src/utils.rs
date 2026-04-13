@@ -175,7 +175,7 @@ pub fn is_alpm_pkg_installed(package_name: &str) -> bool {
 }
 
 pub fn is_intel_amd_gpu(vendor_id: &str, class_id: &str) -> bool {
-    const GPU_CLASS_IDS: &[&str] = &["0300", "0302", "0380"];
+    const GPU_CLASS_IDS: &[&str] = &["0300"];
     const VENDOR_IDS: &[&str] = &["8086", "1002"];
 
     GPU_CLASS_IDS.contains(&class_id) && VENDOR_IDS.contains(&vendor_id)
@@ -215,8 +215,8 @@ mod test {
     #[test]
     fn detects_supported_gpu_vendors_and_classes() {
         assert!(is_intel_amd_gpu("8086", "0300"));
-        assert!(is_intel_amd_gpu("1002", "0302"));
-        assert!(is_intel_amd_gpu("1002", "0380"));
+        assert!(!is_intel_amd_gpu("1002", "0302"));
+        assert!(!is_intel_amd_gpu("1002", "0380"));
         assert!(!is_intel_amd_gpu("10de", "0300"));
         assert!(!is_intel_amd_gpu("8086", "0200"));
     }
