@@ -1,5 +1,5 @@
 project('cachyos-hello', 'rust',
-        version: '0.22.2',
+        version: '0.23.0',
         license: 'GPLv3',
         meson_version: '>=0.56.0',
         default_options: ['buildtype=debugoptimized',
