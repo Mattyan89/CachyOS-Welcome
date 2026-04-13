@@ -115,6 +115,7 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
     let remove_orphans_btn_clone = remove_orphans_btn.clone();
     let install_gaming_btn_clone = install_gaming_btn.clone();
     let install_winboat_btn_clone = install_winboat_btn.clone();
+    let install_gpu_boosters_btn_clone = install_gpu_boosters_btn.clone();
     glib::MainContext::default().spawn_local(async move {
         while let Ok(msg) = dialog_rx.recv().await {
             let widget_obj = match msg.action {
@@ -122,6 +123,9 @@ fn create_fixes_section(builder: &Builder) -> gtk::Box {
                 Action::RemoveOrphans => &remove_orphans_btn_clone,
                 Action::InstallGaming => &install_gaming_btn_clone,
                 Action::InstallWinboat => &install_winboat_btn_clone,
+                Action::InstallGpuBoosters => {
+                    install_gpu_boosters_btn_clone.as_ref().expect("GPU boosters button missing")
+                },
                 _ => panic!("Unexpected action!!"),
             };
             let widget_window =
