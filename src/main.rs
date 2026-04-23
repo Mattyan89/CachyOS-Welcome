@@ -21,7 +21,7 @@ mod utils;
 mod window;
 
 use config::{APP_ID, PROFILE};
-use utils::{check_regular_file, fix_path, read_json, write_json, PacmanWrapper};
+use utils::{PacmanWrapper, check_regular_file, fix_path, read_json, write_json};
 use window::HelloWindow;
 
 use std::path::Path;

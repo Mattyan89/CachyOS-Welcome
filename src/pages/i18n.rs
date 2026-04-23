@@ -85,8 +85,8 @@ pub fn update_translations(builder: &Builder) {
 
     let stack: gtk::Stack = builder.object("stack").unwrap();
     {
-        if let Some(widget) = stack.child_by_name("tweaksBrowserpage") {
-            if let Ok(viewport) = widget.downcast::<gtk::Viewport>() {
+        if let Some(widget) = stack.child_by_name("tweaksBrowserpage")
+            && let Ok(viewport) = widget.downcast::<gtk::Viewport>() {
                 let second_child =
                     &viewport.children()[0].clone().downcast::<gtk::Box>().unwrap().children()[1]
                         .clone()
@@ -111,9 +111,8 @@ pub fn update_translations(builder: &Builder) {
                     }
                 }
             }
-        }
-        if let Some(widget) = stack.child_by_name("dnsConnectionsBrowserpage") {
-            if let Ok(viewport) = widget.downcast::<gtk::Viewport>() {
+        if let Some(widget) = stack.child_by_name("dnsConnectionsBrowserpage")
+            && let Ok(viewport) = widget.downcast::<gtk::Viewport>() {
                 let second_child =
                     &viewport.children()[0].clone().downcast::<gtk::Box>().unwrap().children()[1]
                         .clone()
@@ -126,6 +125,5 @@ pub fn update_translations(builder: &Builder) {
                     update_translation_connections_section(&second_child_child_box);
                 }
             }
-        }
     }
 }

@@ -126,13 +126,12 @@ impl HelloWindow {
             .collect();
 
         // Release page is only generated in English, always include it
-        if file_pages_path != "pages/en" {
-            if let Some(en_release) =
+        if file_pages_path != "pages/en"
+            && let Some(en_release) =
                 crate::embed_data::HelloData::iter().find(|pkg| pkg.as_ref() == "pages/en/release")
             {
                 file_pages.push(en_release);
             }
-        }
 
         for file_path in file_pages {
             // let page_file = HelloData::get(&file_path).unwrap();
@@ -335,13 +334,12 @@ impl HelloWindow {
             .collect();
 
         // Release page is only generated in English, always include it
-        if file_pages_path != "pages/en" {
-            if let Some(en_release) =
+        if file_pages_path != "pages/en"
+            && let Some(en_release) =
                 crate::embed_data::HelloData::iter().find(|pkg| pkg.as_ref() == "pages/en/release")
             {
                 file_pages.push(en_release);
             }
-        }
 
         for file_path in file_pages {
             let page_file_name =

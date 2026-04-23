@@ -3,7 +3,7 @@ use crate::{actions, create_gtk_button, dns, fl, utils};
 
 use gtk::prelude::*;
 
-use gtk::{glib, Builder};
+use gtk::{Builder, glib};
 
 /// Returns true if `s` contains only valid DNS address characters (hex digits, dots, colons,
 /// commas).
@@ -17,15 +17,14 @@ fn selection_index_for_connection(conn_name: &str) -> usize {
     if actions::is_blocky_active() {
         let points_to_blocky = actions::get_dns_for_connection(conn_name)
             .is_some_and(|info| info.ipv4.contains("127.0.0.1") || info.ipv6.contains("::1"));
-        if points_to_blocky {
-            if let Some(doh_url) = dns::read_active_doh_url() {
+        if points_to_blocky
+            && let Some(doh_url) = dns::read_active_doh_url() {
                 if let Some(idx) = dns::find_server_by_doh_url(&doh_url) {
                     return idx;
                 }
                 // Custom DoH URL — show as custom
                 return dns::G_DNS_SERVERS.len();
             }
-        }
     }
 
     if let Some(dns_info) = actions::get_dns_for_connection(conn_name) {

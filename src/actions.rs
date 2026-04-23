@@ -1,6 +1,6 @@
 use crate::systemd_units::Scope;
 use crate::ui::{Action, DialogMessage, MessageType, RunCmdCallback};
-use crate::{dns, fl, kwin_dbus, systemd_units, utils, PacmanWrapper};
+use crate::{PacmanWrapper, dns, fl, kwin_dbus, systemd_units, utils};
 
 use std::path::Path;
 use std::time::Duration;
@@ -449,8 +449,8 @@ pub fn install_winboat(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage
 
     // Add the current user to the docker group
     let group_added = get_user_groups().iter().any(|x| x == "docker");
-    if utils::is_alpm_pkg_installed("docker") && !group_added {
-        if let Ok(current_user) = env::var("USER") {
+    if utils::is_alpm_pkg_installed("docker") && !group_added
+        && let Ok(current_user) = env::var("USER") {
             let failed = utils::pkexec_cmd(&["/sbin/usermod", "-aG", "docker", &current_user])
                 .map_or(true, |s| !s.success());
             if failed {
@@ -463,5 +463,4 @@ pub fn install_winboat(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage
                     .expect("Couldn't send data to channel");
             }
         }
-    }
 }

@@ -40,34 +40,26 @@ pub fn write_json(path: &str, content: &serde_json::Value) {
 
 #[inline]
 pub const fn const_min(v1: usize, v2: usize) -> usize {
-    if v1 <= v2 {
-        v1
-    } else {
-        v2
-    }
+    if v1 <= v2 { v1 } else { v2 }
 }
 
 #[inline]
 pub const fn string_substr(src_str: &str, pos: usize, n: usize) -> Result<&str, str::Utf8Error> {
     let rlen = const_min(n, src_str.len() - pos);
-    let s = unsafe {
+    
+    unsafe {
         // First, we build a &[u8]...
         let slice = slice::from_raw_parts(src_str.as_ptr().add(pos), rlen);
 
         // ... and then convert that slice into a string slice
         str::from_utf8(slice)
-    };
-    s
+    }
 }
 
 #[inline]
 pub fn check_regular_file(path: &str) -> bool {
     let metadata = fs::metadata(path);
-    if let Ok(meta) = metadata {
-        meta.file_type().is_file()
-    } else {
-        false
-    }
+    if let Ok(meta) = metadata { meta.file_type().is_file() } else { false }
 }
 
 pub fn find_iter_in_model(
@@ -76,11 +68,10 @@ pub fn find_iter_in_model(
 ) -> Option<gtk::TreeIter> {
     if let Some(iter) = model.iter_first() {
         loop {
-            if let Ok(value) = model.value(&iter, 0).get::<String>() {
-                if value == search_text {
+            if let Ok(value) = model.value(&iter, 0).get::<String>()
+                && value == search_text {
                     return Some(iter);
                 }
-            }
 
             if !model.iter_next(&iter) {
                 break;
@@ -193,7 +184,7 @@ pub fn is_kwin_wayland() -> bool {
         .args(&["kwin_wayland"])
         .stdout(subprocess::NullFile)
         .join()
-        .is_ok_and(|status| status.success())
+        .is_ok_and(subprocess::ExitStatus::success)
 }
 
 #[cfg(test)]

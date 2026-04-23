@@ -340,11 +340,10 @@ pub fn read_active_doh_url() -> Option<String> {
 /// Returns the index into `G_DNS_SERVERS`, or None if it's a custom URL.
 pub fn find_server_by_doh_url(doh_url: &str) -> Option<usize> {
     for (idx, (name, _)) in G_DNS_SERVERS.entries().enumerate() {
-        if let Some(url) = G_DNS_DOH_URLS.get(name) {
-            if *url == doh_url {
+        if let Some(url) = G_DNS_DOH_URLS.get(name)
+            && *url == doh_url {
                 return Some(idx);
             }
-        }
     }
     None
 }

@@ -1,6 +1,6 @@
 use crate::gui::Gui;
 use crate::ui::{MessageType, UI};
-use crate::{check_regular_file, fl, G_HELLO_WINDOW};
+use crate::{G_HELLO_WINDOW, check_regular_file, fl};
 
 use std::fs;
 use std::io::{BufRead, BufReader};

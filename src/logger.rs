@@ -1,8 +1,8 @@
 use crate::utils;
 
 use tracing_appender::non_blocking::WorkerGuard;
-use tracing_subscriber::prelude::*;
 use tracing_subscriber::EnvFilter;
+use tracing_subscriber::prelude::*;
 
 pub fn setup_logger() -> WorkerGuard {
     // set log level from RUST_LOG env var

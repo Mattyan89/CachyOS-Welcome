@@ -10,7 +10,7 @@ use std::str;
 
 use gtk::prelude::*;
 
-use gtk::{glib, Builder};
+use gtk::{Builder, glib};
 use tracing::debug;
 use which::which;
 
@@ -214,11 +214,7 @@ fn create_apps_section() -> Option<gtk::Box> {
     topbox.pack_end(&box_collection, true, true, 0);
 
     topbox.set_hexpand(true);
-    if box_collection.children().is_empty() {
-        None
-    } else {
-        Some(topbox)
-    }
+    if box_collection.children().is_empty() { None } else { Some(topbox) }
 }
 
 pub fn create_tweaks_page(builder: &Builder) {
