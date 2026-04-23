@@ -3,7 +3,7 @@ name = "cachyos-hello"
 version = "0.23.2"
 authors = ["Vladislav Nepogodin <nepogodin.vlad@gmail.com>"]
 license = "GPLv3"
-edition = "2021"
+edition = "2024"
 description = "CachyOS Welcome Screen"
 repository = "https://github.com/cachyos/cachyos-welcome"
 keywords = ["cachyos", "linux", "gtk", "welcome"]
@@ -34,7 +34,7 @@ tracing-appender = "0.2"
 which = { version = "8.0", features = ["tracing"] }
 
 anyhow = { version = "1", default-features = false, features = ["std"] }
-tokio = { version = "1.51", features = ["macros", "sync", "rt-multi-thread"] }
+tokio = { version = "1.52", features = ["macros", "sync", "rt-multi-thread"] }
 zbus = { version = "5", features = ["tokio"], default-features = false }
 zbus_systemd = { version = "0.26000.0", features = ["systemd1"], default-features = false }
 clap = { features = ["derive"], version = "4" }
