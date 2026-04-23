@@ -31,6 +31,7 @@ unsafe impl Sync for HelloWindow {}
 
 impl HelloWindow {
     /// Create a new `HelloWindow`.
+    #[expect(clippy::too_many_lines, reason = "GTK window initialization")]
     pub fn new(
         application: &gtk::Application,
         preferences: serde_json::Value,
@@ -51,8 +52,7 @@ impl HelloWindow {
         );
 
         // Init window
-        let builder: Builder =
-            Builder::from_resource(&format!("{RESPREFIX}/ui/cachyos-hello.glade"));
+        let builder = Builder::from_resource(&format!("{RESPREFIX}/ui/cachyos-hello.glade"));
 
         let main_window: Window =
             builder.object("window").expect("Could not get the object window");
@@ -121,9 +121,18 @@ impl HelloWindow {
         let file_pages_path =
             if locale_pages_exist { format!("pages/{best_locale}") } else { "pages/en".to_owned() };
 
-        let file_pages = crate::embed_data::HelloData::iter()
+        let mut file_pages: Vec<std::borrow::Cow<'_, str>> = crate::embed_data::HelloData::iter()
             .filter(|pkg| pkg.starts_with(&file_pages_path))
-            .collect::<Vec<_>>();
+            .collect();
+
+        // Release page is only generated in English, always include it
+        if file_pages_path != "pages/en" {
+            if let Some(en_release) =
+                crate::embed_data::HelloData::iter().find(|pkg| pkg.as_ref() == "pages/en/release")
+            {
+                file_pages.push(en_release);
+            }
+        }
 
         for file_path in file_pages {
             // let page_file = HelloData::get(&file_path).unwrap();
@@ -169,8 +178,8 @@ impl HelloWindow {
         languages.set_active_id(Some(best_locale));
 
         // Set autostart switcher state
-        let autostart =
-            Path::new(&utils::fix_path(preferences["autostart_path"].as_str().unwrap())).exists();
+        let autostart = utils::fix_path(preferences["autostart_path"].as_str().unwrap())
+            .is_ok_and(|path| Path::new(&path).exists());
         let autostart_switch: gtk::Switch = builder.object("autostart").unwrap();
         autostart_switch.set_active(autostart);
 
@@ -321,9 +330,18 @@ impl HelloWindow {
         let file_pages_path =
             if locale_pages_exist { format!("pages/{use_locale}") } else { "pages/en".to_owned() };
 
-        let file_pages = crate::embed_data::HelloData::iter()
+        let mut file_pages: Vec<std::borrow::Cow<'_, str>> = crate::embed_data::HelloData::iter()
             .filter(|pkg| pkg.starts_with(&file_pages_path))
-            .collect::<Vec<_>>();
+            .collect();
+
+        // Release page is only generated in English, always include it
+        if file_pages_path != "pages/en" {
+            if let Some(en_release) =
+                crate::embed_data::HelloData::iter().find(|pkg| pkg.as_ref() == "pages/en/release")
+            {
+                file_pages.push(en_release);
+            }
+        }
 
         for file_path in file_pages {
             let page_file_name =
