@@ -400,8 +400,8 @@ checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 
 [[package]]
 name = "chwd"
-version = "1.20.0"
-source = "git+https://github.com/CachyOS/chwd?rev=fd4fe02d4bde816ed0f24d98d6d4aceab12f5554#fd4fe02d4bde816ed0f24d98d6d4aceab12f5554"
+version = "1.21.0"
+source = "git+https://github.com/CachyOS/chwd?rev=dfa3f27cbbf885abe446cf2fcd328cf691e9512b#dfa3f27cbbf885abe446cf2fcd328cf691e9512b"
 dependencies = [
  "anyhow",
  "clap",
@@ -412,6 +412,7 @@ dependencies = [
  "i18n-embed",
  "i18n-embed-fl",
  "libpci",
+ "libusb",
  "log",
  "nix",
  "once_cell",
@@ -1773,7 +1774,7 @@ dependencies = [
 [[package]]
 name = "libpci"
 version = "0.1.3"
-source = "git+https://github.com/CachyOS/chwd?rev=fd4fe02d4bde816ed0f24d98d6d4aceab12f5554#fd4fe02d4bde816ed0f24d98d6d4aceab12f5554"
+source = "git+https://github.com/CachyOS/chwd?rev=dfa3f27cbbf885abe446cf2fcd328cf691e9512b#dfa3f27cbbf885abe446cf2fcd328cf691e9512b"
 dependencies = [
  "libc",
  "libpci-c-sys",
@@ -1782,10 +1783,28 @@ dependencies = [
 [[package]]
 name = "libpci-c-sys"
 version = "0.1.3"
-source = "git+https://github.com/CachyOS/chwd?rev=fd4fe02d4bde816ed0f24d98d6d4aceab12f5554#fd4fe02d4bde816ed0f24d98d6d4aceab12f5554"
+source = "git+https://github.com/CachyOS/chwd?rev=dfa3f27cbbf885abe446cf2fcd328cf691e9512b#dfa3f27cbbf885abe446cf2fcd328cf691e9512b"
 dependencies = [
  "bindgen",
  "cc",
+ "libc",
+]
+
+[[package]]
+name = "libusb"
+version = "0.1.0"
+source = "git+https://github.com/CachyOS/chwd?rev=dfa3f27cbbf885abe446cf2fcd328cf691e9512b#dfa3f27cbbf885abe446cf2fcd328cf691e9512b"
+dependencies = [
+ "libc",
+ "libusb-c-sys",
+]
+
+[[package]]
+name = "libusb-c-sys"
+version = "0.1.0"
+source = "git+https://github.com/CachyOS/chwd?rev=dfa3f27cbbf885abe446cf2fcd328cf691e9512b#dfa3f27cbbf885abe446cf2fcd328cf691e9512b"
+dependencies = [
+ "bindgen",
  "libc",
 ]
 

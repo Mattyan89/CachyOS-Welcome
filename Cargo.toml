@@ -4,6 +4,10 @@ version = "0.23.2"
 authors = ["Vladislav Nepogodin <nepogodin.vlad@gmail.com>"]
 license = "GPLv3"
 edition = "2021"
+description = "CachyOS Welcome Screen"
+repository = "https://github.com/cachyos/cachyos-welcome"
+keywords = ["cachyos", "linux", "gtk", "welcome"]
+categories = ["gui"]
 
 [dependencies]
 alpm = { default-features = false, version = "5" }
@@ -23,7 +27,7 @@ serde_json = "1"
 reqwest = { version = "0.13", features = ["blocking", "json"] }
 unic-langid = "0.9"
 phf = { version = "0.13", features = ["macros"], default-features = false }
-chwd = { git = "https://github.com/CachyOS/chwd", rev = "fd4fe02d4bde816ed0f24d98d6d4aceab12f5554", version = "1.20.0" }
+chwd = { git = "https://github.com/CachyOS/chwd", rev = "dfa3f27cbbf885abe446cf2fcd328cf691e9512b", version = "1.21.0" }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
