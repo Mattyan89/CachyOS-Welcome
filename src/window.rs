@@ -1,5 +1,5 @@
 use crate::config::{APP_ID, VERSION};
-use crate::{check_regular_file, installer, pages, utils, RESPREFIX};
+use crate::{RESPREFIX, check_regular_file, installer, pages, utils};
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -12,7 +12,7 @@ use gtk::prelude::*;
 
 use gtk::gdk_pixbuf::Pixbuf;
 use gtk::glib::GString;
-use gtk::{gdk, glib, Builder, HeaderBar, Window};
+use gtk::{Builder, HeaderBar, Window, gdk, glib};
 use tracing::{debug, error};
 use unic_langid::LanguageIdentifier;
 
@@ -178,8 +178,8 @@ impl HelloWindow {
         languages.set_active_id(Some(best_locale));
 
         // Set autostart switcher state
-        let autostart = utils::fix_path(preferences["autostart_path"].as_str().unwrap())
-            .is_ok_and(|path| Path::new(&path).exists());
+        let autostart =
+            Path::new(&utils::fix_path(preferences["autostart_path"].as_str().unwrap())).exists();
         let autostart_switch: gtk::Switch = builder.object("autostart").unwrap();
         autostart_switch.set_active(autostart);
 
