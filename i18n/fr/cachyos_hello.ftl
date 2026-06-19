@@ -1,8 +1,8 @@
-# About dialog
+# Boite de dialogue : À propos
 about-dialog-title = CachyOS Hello
-about-dialog-comments = Application de bienvenue pour CachyOS
+about-dialog-comments = Écran de bienvenue pour CachyOS
 
-# Tweaks page
+# Page des modifications
 tweaks = Modifications
 fixes = Utilitaires
 applications = Applications
@@ -10,27 +10,38 @@ removed-db-lock = Le verrou de la base de données Pacman a été supprimé !
 lock-doesnt-exist = Le verrou de la base de données Pacman n'existe pas !
 orphans-not-found = Aucun paquet orphelin trouvé !
 package-not-installed = Le paquet '{$package_name}' n'a pas été installé !
-gaming-package-installed = Paquets de Gaming déjà installés !
+gaming-package-installed = Les paquets de jeux sont déjà installés !
+winboat-package-installed = Les paquets Winboat sont déjà installés !
+vram-management-package-installed = Les paquets de gestion de la mémoire vidéo (VRAM) sont déjà installés !
 
-# Application Browser page
+# Page du navigateur d'applications
 advanced-btn = Avancé
 reset-btn = Réinitialisation
 update-system-app-btn = METTRE À JOUR LE SYSTÈME
 application-column = Application
 description-column = Description
 install-remove-column = Installer/Supprimer
-advanced-btn-tooltip = Sélectionner une séleciton étendue de paquets
+advanced-btn-tooltip = Basculer vers une sélection étendue des paquets
 reset-btn-tooltip = Réinitialiser vos sélections actuelles...
 update-system-app-btn-tooltip = Appliquer vos sélections actuelles au système
 
-# Dns Connections page
+# Page de dépannage
+troubleshooting = Dépannage
+
+# Page « Connexions DNS »
 dns-settings = Paramètres DNS
 select-connection = Sélectionner une connexion :
 select-dns-server = Selectionner un serveur DNS :
 apply = Appliquer
 reset = Réinitialiser
 enable-dot = Activer DNS sur TLS (DoT)
-dot-tooltip = Chiffrer les requêtes DNS via TLS pour une meilleure confidentialité (nécessite le support du serveur)
+dot-tooltip = Chiffrer les requêtes DNS via TLS pour une meilleure confidentialité (nécessite la prise en charge serveur)
+enable-doh = Activer le DNS sur HTTPS (DoH)
+doh-tooltip = Chiffrer les requêtes DNS via HTTPS à l'aide du proxy local blocky (nécessite la prise en charge serveur et l'installation de blocky)
+doh-blocky-install-failed = Échec de l'installation de blocky pour le support DoH !
+enable-doq = Activer le DNS sur QUIC (DoQ)
+doq-tooltip = Chiffrer les requêtes DNS via QUIC à l'aide du proxy local blocky (nécessite la prise en charge serveur et l'installation de blocky)
+doq-blocky-install-failed = Échec de l'installation de blocky pour le support DoQ !
 test-latency = Tester la latence du serveur sélectionné
 test-latency-tooltip = Mesurer la latence réseau vers le serveur DNS sélectionné
 best-server = Sélectionner le meilleur serveur par latence
@@ -40,67 +51,81 @@ server-info = {""}
 latency-testing = test en cours...
 latency-timeout = délai dépassé
 latency-no-result = aucun serveur n'a répondu
+custom-dns = Personnalisé
+dhcp-automatic = DHCP (automatique)
+custom-dns-ipv4 = Adresses IPv4 (séparées par des virgules) :
+custom-dns-ipv6 = Adresses IPv6 (séparées par des virgules) :
+custom-dns-dot-hostname = Nom d'hôte DoT (optionnel) :
+custom-dns-invalid = Veuillez entrer au moins une adresse IPv4 ou IPv6
+custom-dns-invalid-hostname = Nom d'hôte DoT invalide
+custom-dns-doh-url = URL DoH (pour DNS sur HTTPS) :
+custom-dns-doh-url-required = Veuillez entrer une URL DoH valide commençant par https://
+custom-dns-doq-endpoint = Point de terminaison DoQ (pour DNS sur QUIC) :
+custom-dns-doq-endpoint-required = Veuillez saisir un point de terminaison DoQ valide commençant par quic: ou quic://
 dns-check-hint = Après application, vérifiez votre fournisseur DNS sur
 dns-server-changed = Le serveur DNS a été modifié avec succès !
 dns-server-failed = Échec de la modification du serveur DNS !
 dns-server-reset = Le serveur DNS a été réinitialisé !
 dns-server-reset-failed = Échec de la réinitialisation du serveur DNS !
+winboat-install-failed = Échec de l'installation de Winboat !
 
-# Tweaks page (tweaks)
+# Page des modifications (modifications)
 tweak-enabled-title = {$tweak} activé
-tweak-psd-tooltip = Utilise la mémoire pour le cache des profils du navigateur web (plus rapide, moins d'usure du disque)
-tweak-oomd-tooltip = Tue proactivement les processus en cas de mémoire faible pour prévenir un crash du système
-tweak-bpftune-tooltip = Ajustement adaptatif des paramètres de performance réseau du noyau
-tweak-bluetooth-tooltip = Active le support des périphériques sans fil Bluetooth (souris, audio, etc.)
-tweak-ananicycpp-tooltip = Autoajuste la priorité des processus pour une meilleure réactivité du système
-tweak-cachyupdate-tooltip = Notifie des mises à jour disponibles dans la barre de tâches
+tweak-psd-tooltip = Utiliser la mémoire vive (RAM) pour les profils du navigateur (plus rapide, moins d'usure du disque)
+tweak-oomd-tooltip = Tuer proactivement les processus en cas de mémoire insuffisante pour éviter les blocages
+tweak-bpftune-tooltip = Régler automatiquement le réseau système
+tweak-bluetooth-tooltip = Activer la prise en charge des appareils sans fil Bluetooth (souris, audio, etc.)
+tweak-ananicycpp-tooltip = Ajuster automatiquement la priorité des processus pour améliorer la réactivité du système
+tweak-cachyupdate-tooltip = Notifie les mises à jour dans la zone de notification
 
-# Tweaks page (fixes)
+# Page des modifications (corrections)
 remove-lock-title = Supprimer le verrou de la base de données
 reinstall-title = Réinstaller tous les paquets
+reset-keyrings-title = Réinitialiser les trousseaux de clés
 update-system-title = Mise à jour du système
 remove-orphans-title = Supprimer les orphelins
-clear-pkgcache-title = Nettoyer le cache du paquet
+clear-pkgcache-title = Vider le cache des paquets
 rankmirrors-title = Classer les miroirs
 dnsserver-title = Changer le serveur DNS
-show-kwinw-debug-title = Montrer la fenêtre de débuggage de kwin(Wayland)
-install-gaming-title = Installer les paquets de Gaming
-reset-keyrings-title = Restaurer porte-clé
+show-kwinw-debug-title = Afficher la fenêtre de débogage de kwin(Wayland)
+install-gaming-title = Installer les paquets de jeux
 install-winboat-title = Installer Winboat
+install-vram-management-title = Installer la gestion VRAM
+install-vram-management-tooltip = Prioriser la mémoire vidéo (VRAM) pour l'application au premier plan afin d'éviter que le pilote GPU ne déverser les tampons dans la mémoire système (GTT).
 
-# Main Page (buttons)
+# Page principale (boutons)
 button-about-tooltip = À propos
-button-web-resource-tooltip = Ressource Web
+button-web-resource-tooltip = Ressource en ligne
 button-development-label = Développement
 button-software-label = Logiciel
 button-donate-label = Faire un don
 button-forum-label = Forum
 button-installer-label = Lancer l'installateur
 button-involved-label = S'impliquer
-button-readme-label = Lisez moi
-button-release-info-label = Informations sur la publication
+button-readme-label = Lisez-moi
+button-release-info-label = Informations sur la version
 button-wiki-label = Wiki
 
-# Main Page (sections)
+# Page principale (sections)
 section-docs = DOCUMENTATION
 section-installer = INSTALLATION
 section-support = SUPPORT
 section-project = PROJET
 
-# Main Page (launch installer)
+# Page principale (programme d'installation)
 recommended = recommandé
 calamares-install-type = Type d'installion Calamares
 
-# Main Page (body)
+# Page principale (corps)
 offline-error = Impossible de démarrer l'installation en ligne ! Pas de connexion internet
 unsupported-hw-warning = Vous tentez d'installer sur du matériel non supporté par l\'ISO actuelle, votre installation ne sera pas éligible à de l\'assistance
 desktop-on-handheld-error = Vous tentez d\'installer l\'édition Desktop sur un appareil portable. Veuillez utiliser l\'édition Handheld pour une prise en charge correcte de ce matériel
-outdated-version-warning = Vous utilisez une ancienne version de l'ISO de CachyOS, merci de bien vouloir utiliser la dernière version pour des installations
-testing-iso-warning = Vous utilisez une ISO de test, les ISOs de test ne sont pas considérées stables et prêtes à l'utilisation
+outdated-version-warning = Vous utilisez une ancienne version de l'ISO de CachyOS, veuillez utiliser la dernière version pour vos installations
+testing-iso-warning = Vous utilisez une ISO de test, les ISOs de test ne sont pas considérées comme stables ni prêtes à l'emploi.
 tweaksbrowser-label = Applications/Modifications
 appbrowser-label = Installer des Applications
-launch-start-label = Démarrer au lancement
-welcome-title = Bienvenue sur CachyOS!
+launch-start-label = Lancer au démarrage
+welcome-title = Bienvenue sur CachyOS !
 welcome-body =
     Merci de rejoindre notre communauté !
 
