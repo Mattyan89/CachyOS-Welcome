@@ -40,7 +40,12 @@ fn update_translation_connections_section(section_box: &gtk::Box) {
                 if let Ok(box_element_check) =
                     object_box_widget.clone().downcast::<gtk::CheckButton>()
                 {
-                    let translated_text = crate::localization::get_locale_text(&widget_name);
+                    let translated_text = match widget_name.as_str() {
+                        "enable-dot" => fl!("enable-encrypted-dns", protocol = "TLS", abbr = "DoT"),
+                        "enable-doh" => fl!("enable-encrypted-dns", protocol = "HTTPS", abbr = "DoH"),
+                        "enable-doq" => fl!("enable-encrypted-dns", protocol = "QUIC", abbr = "DoQ"),
+                        _ => crate::localization::get_locale_text(&widget_name),
+                    };
                     box_element_check.set_label(&translated_text);
                 } else if let Ok(box_element_btn) =
                     object_box_widget.clone().downcast::<gtk::Button>()

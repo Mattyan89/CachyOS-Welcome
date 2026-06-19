@@ -166,18 +166,18 @@ fn create_connections_section() -> gtk::Box {
     combo_servers.set_widget_name("servers_combo");
 
     // DoT (DNS over TLS) toggle
-    let dot_check = gtk::CheckButton::with_label(&fl!("enable-dot"));
+    let dot_check = gtk::CheckButton::with_label(&fl!("enable-encrypted-dns", protocol = "TLS", abbr = "DoT"));
     dot_check.set_tooltip_text(Some(&fl!("dot-tooltip")));
     dot_check.set_widget_name("enable-dot");
 
     // DoH (DNS over HTTPS) toggle — uses blocky local proxy
-    let doh_check = gtk::CheckButton::with_label(&fl!("enable-doh"));
-    doh_check.set_tooltip_text(Some(&fl!("doh-tooltip")));
+    let doh_check = gtk::CheckButton::with_label(&fl!("enable-encrypted-dns", protocol = "HTTPS", abbr = "DoH"));
+    doh_check.set_tooltip_text(Some(&fl!("blocky-dns-tooltip", protocol = "HTTPS")));
     doh_check.set_widget_name("enable-doh");
 
     // DoQ (DNS over QUIC) toggle — uses blocky local proxy
-    let doq_check = gtk::CheckButton::with_label(&fl!("enable-doq"));
-    doq_check.set_tooltip_text(Some(&fl!("doq-tooltip")));
+    let doq_check = gtk::CheckButton::with_label(&fl!("enable-encrypted-dns", protocol = "QUIC", abbr = "DoQ"));
+    doq_check.set_tooltip_text(Some(&fl!("blocky-dns-tooltip", protocol = "QUIC")));
     doq_check.set_widget_name("enable-doq");
 
     // DoT, DoH, and DoQ are mutually exclusive
@@ -218,13 +218,13 @@ fn create_connections_section() -> gtk::Box {
     let custom_doq_box = gtk::Box::new(gtk::Orientation::Horizontal, 2);
 
     let custom_ipv4_label = gtk::Label::new(None);
-    custom_ipv4_label.set_text(&fl!("custom-dns-ipv4"));
+    custom_ipv4_label.set_text(&fl!("custom-dns-ip", version = "IPv4"));
     let custom_ipv4_entry = gtk::Entry::new();
     custom_ipv4_entry.set_placeholder_text(Some("e.g. 1.1.1.1,1.0.0.1"));
     custom_ipv4_entry.set_widget_name("custom-dns-ipv4");
 
     let custom_ipv6_label = gtk::Label::new(None);
-    custom_ipv6_label.set_text(&fl!("custom-dns-ipv6"));
+    custom_ipv6_label.set_text(&fl!("custom-dns-ip", version = "IPv6"));
     let custom_ipv6_entry = gtk::Entry::new();
     custom_ipv6_entry.set_placeholder_text(Some("e.g. 2606:4700:4700::1111"));
     custom_ipv6_entry.set_widget_name("custom-dns-ipv6");
@@ -752,8 +752,8 @@ fn create_connections_section() -> gtk::Box {
     let check_label = gtk::Label::new(None);
     check_label.set_use_markup(true);
     check_label.set_markup(&format!(
-        "<small>{} <a href=\"https://dnscheck.tools\">dnscheck.tools</a></small>",
-        fl!("dns-check-hint")
+        "<small>{}</small>",
+        fl!("dns-check-hint", dnscheck_url = "<a href=\"https://dnscheck.tools\">dnscheck.tools</a>")
     ));
     check_label.set_justify(gtk::Justification::Center);
     let check_box = gtk::Box::new(gtk::Orientation::Horizontal, 0);

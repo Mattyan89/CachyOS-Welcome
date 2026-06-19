@@ -199,8 +199,8 @@ pub fn change_dns_server_blocky(
     dialog_tx: Sender<DialogMessage>,
 ) {
     let install_failed_msg = match mode {
-        dns::BlockyMode::Doh => fl!("doh-blocky-install-failed"),
-        dns::BlockyMode::Doq => fl!("doq-blocky-install-failed"),
+        dns::BlockyMode::Doh => fl!("blocky-install-failed", mode = "DoH"),
+        dns::BlockyMode::Doq => fl!("blocky-install-failed", mode = "DoQ"),
     };
 
     // 1. Install blocky if not present
