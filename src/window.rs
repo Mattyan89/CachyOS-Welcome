@@ -129,9 +129,9 @@ impl HelloWindow {
         if file_pages_path != "pages/en"
             && let Some(en_release) =
                 crate::embed_data::HelloData::iter().find(|pkg| pkg.as_ref() == "pages/en/release")
-            {
-                file_pages.push(en_release);
-            }
+        {
+            file_pages.push(en_release);
+        }
 
         for file_path in file_pages {
             // let page_file = HelloData::get(&file_path).unwrap();
@@ -338,16 +338,16 @@ impl HelloWindow {
         if file_pages_path != "pages/en"
             && let Some(en_release) =
                 crate::embed_data::HelloData::iter().find(|pkg| pkg.as_ref() == "pages/en/release")
-            {
-                file_pages.push(en_release);
-            }
+        {
+            file_pages.push(en_release);
+        }
 
         for file_path in file_pages {
             let page_file_name =
                 Path::new(file_path.as_ref()).file_name().unwrap().to_str().unwrap();
 
             let stack: &gtk::Stack = &self.builder.object("stack").unwrap();
-            let child = stack.child_by_name(&format!("{}page", &page_file_name));
+            let child = stack.child_by_name(&format!("{}page", page_file_name));
             if child.is_none() {
                 debug!("child not found");
                 continue;

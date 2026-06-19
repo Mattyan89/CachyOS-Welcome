@@ -374,7 +374,9 @@ pub fn read_active_blocky_upstream() -> Option<String> {
     }
     for line in config.lines() {
         let trimmed = line.trim().trim_start_matches("- ").trim_matches('"');
-        if trimmed.starts_with("https://") || trimmed.starts_with("quic:") || trimmed.starts_with("quic://")
+        if trimmed.starts_with("https://")
+            || trimmed.starts_with("quic:")
+            || trimmed.starts_with("quic://")
         {
             return Some(trimmed.to_string());
         }

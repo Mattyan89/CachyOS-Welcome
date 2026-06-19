@@ -17,9 +17,7 @@ fn selection_index_for_connection(conn_name: &str) -> usize {
     if actions::is_blocky_active() {
         let points_to_blocky = actions::get_dns_for_connection(conn_name)
             .is_some_and(|info| info.ipv4.contains("127.0.0.1") || info.ipv6.contains("::1"));
-        if points_to_blocky
-            && let Some((mode, upstream)) = dns::read_active_blocky()
-        {
+        if points_to_blocky && let Some((mode, upstream)) = dns::read_active_blocky() {
             return dns::find_server_by_blocky_upstream(&upstream, mode)
                 .unwrap_or(dns::G_DNS_SERVERS.len());
         }
@@ -166,17 +164,23 @@ fn create_connections_section() -> gtk::Box {
     combo_servers.set_widget_name("servers_combo");
 
     // DoT (DNS over TLS) toggle
-    let dot_check = gtk::CheckButton::with_label(&fl!("enable-encrypted-dns", protocol = "TLS", abbr = "DoT"));
+    let dot_check =
+        gtk::CheckButton::with_label(&fl!("enable-encrypted-dns", protocol = "TLS", abbr = "DoT"));
     dot_check.set_tooltip_text(Some(&fl!("dot-tooltip")));
     dot_check.set_widget_name("enable-dot");
 
     // DoH (DNS over HTTPS) toggle — uses blocky local proxy
-    let doh_check = gtk::CheckButton::with_label(&fl!("enable-encrypted-dns", protocol = "HTTPS", abbr = "DoH"));
+    let doh_check = gtk::CheckButton::with_label(&fl!(
+        "enable-encrypted-dns",
+        protocol = "HTTPS",
+        abbr = "DoH"
+    ));
     doh_check.set_tooltip_text(Some(&fl!("blocky-dns-tooltip", protocol = "HTTPS")));
     doh_check.set_widget_name("enable-doh");
 
     // DoQ (DNS over QUIC) toggle — uses blocky local proxy
-    let doq_check = gtk::CheckButton::with_label(&fl!("enable-encrypted-dns", protocol = "QUIC", abbr = "DoQ"));
+    let doq_check =
+        gtk::CheckButton::with_label(&fl!("enable-encrypted-dns", protocol = "QUIC", abbr = "DoQ"));
     doq_check.set_tooltip_text(Some(&fl!("blocky-dns-tooltip", protocol = "QUIC")));
     doq_check.set_widget_name("enable-doq");
 
@@ -184,24 +188,30 @@ fn create_connections_section() -> gtk::Box {
     let dot_check_excl = dot_check.clone();
     let doh_check_excl = doh_check.clone();
     let doq_check_excl = doq_check.clone();
-    dot_check.connect_toggled(glib::clone!(@weak doh_check_excl, @weak doq_check_excl => move |check| {
-        if check.is_active() {
-            doh_check_excl.set_active(false);
-            doq_check_excl.set_active(false);
-        }
-    }));
-    doh_check.connect_toggled(glib::clone!(@weak dot_check_excl, @weak doq_check_excl => move |check| {
-        if check.is_active() {
-            dot_check_excl.set_active(false);
-            doq_check_excl.set_active(false);
-        }
-    }));
-    doq_check.connect_toggled(glib::clone!(@weak dot_check_excl, @weak doh_check_excl => move |check| {
-        if check.is_active() {
-            dot_check_excl.set_active(false);
-            doh_check_excl.set_active(false);
-        }
-    }));
+    dot_check.connect_toggled(
+        glib::clone!(@weak doh_check_excl, @weak doq_check_excl => move |check| {
+            if check.is_active() {
+                doh_check_excl.set_active(false);
+                doq_check_excl.set_active(false);
+            }
+        }),
+    );
+    doh_check.connect_toggled(
+        glib::clone!(@weak dot_check_excl, @weak doq_check_excl => move |check| {
+            if check.is_active() {
+                dot_check_excl.set_active(false);
+                doq_check_excl.set_active(false);
+            }
+        }),
+    );
+    doq_check.connect_toggled(
+        glib::clone!(@weak dot_check_excl, @weak doh_check_excl => move |check| {
+            if check.is_active() {
+                dot_check_excl.set_active(false);
+                doh_check_excl.set_active(false);
+            }
+        }),
+    );
 
     // Server info label (region + homepage link)
     let info_label = gtk::Label::new(None);
@@ -335,8 +345,11 @@ fn create_connections_section() -> gtk::Box {
                 doq_check.set_sensitive(true);
             } else {
                 let blocky_active = actions::is_blocky_active();
-                let active_mode =
-                    if blocky_active { dns::read_active_blocky().map(|(mode, _)| mode) } else { None };
+                let active_mode = if blocky_active {
+                    dns::read_active_blocky().map(|(mode, _)| mode)
+                } else {
+                    None
+                };
 
                 let supports_dot = server_supports_dot(selected_dns_index);
                 dot_check.set_sensitive(supports_dot);
@@ -753,7 +766,10 @@ fn create_connections_section() -> gtk::Box {
     check_label.set_use_markup(true);
     check_label.set_markup(&format!(
         "<small>{}</small>",
-        fl!("dns-check-hint", dnscheck_url = "<a href=\"https://dnscheck.tools\">dnscheck.tools</a>")
+        fl!(
+            "dns-check-hint",
+            dnscheck_url = "<a href=\"https://dnscheck.tools\">dnscheck.tools</a>"
+        )
     ));
     check_label.set_justify(gtk::Justification::Center);
     let check_box = gtk::Box::new(gtk::Orientation::Horizontal, 0);

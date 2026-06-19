@@ -42,8 +42,12 @@ fn update_translation_connections_section(section_box: &gtk::Box) {
                 {
                     let translated_text = match widget_name.as_str() {
                         "enable-dot" => fl!("enable-encrypted-dns", protocol = "TLS", abbr = "DoT"),
-                        "enable-doh" => fl!("enable-encrypted-dns", protocol = "HTTPS", abbr = "DoH"),
-                        "enable-doq" => fl!("enable-encrypted-dns", protocol = "QUIC", abbr = "DoQ"),
+                        "enable-doh" => {
+                            fl!("enable-encrypted-dns", protocol = "HTTPS", abbr = "DoH")
+                        },
+                        "enable-doq" => {
+                            fl!("enable-encrypted-dns", protocol = "QUIC", abbr = "DoQ")
+                        },
                         _ => crate::localization::get_locale_text(&widget_name),
                     };
                     box_element_check.set_label(&translated_text);
@@ -95,44 +99,46 @@ pub fn update_translations(builder: &Builder) {
     let stack: gtk::Stack = builder.object("stack").unwrap();
     {
         if let Some(widget) = stack.child_by_name("tweaksBrowserpage")
-            && let Ok(viewport) = widget.downcast::<gtk::Viewport>() {
-                let second_child =
-                    &viewport.children()[0].clone().downcast::<gtk::Box>().unwrap().children()[1]
-                        .clone()
-                        .downcast::<gtk::Box>()
-                        .unwrap();
+            && let Ok(viewport) = widget.downcast::<gtk::Viewport>()
+        {
+            let second_child =
+                &viewport.children()[0].clone().downcast::<gtk::Box>().unwrap().children()[1]
+                    .clone()
+                    .downcast::<gtk::Box>()
+                    .unwrap();
 
-                for second_child_child_widget in second_child.children() {
-                    let second_child_child_box =
-                        second_child_child_widget.downcast::<gtk::Box>().unwrap();
+            for second_child_child_widget in second_child.children() {
+                let second_child_child_box =
+                    second_child_child_widget.downcast::<gtk::Box>().unwrap();
 
-                    match second_child_child_box.widget_name().as_str() {
-                        "tweaksBrowserpage_options" => {
-                            update_translation_options_section(&second_child_child_box);
-                        },
-                        "tweaksBrowserpage_fixes" => {
-                            update_translation_fixes_section(&second_child_child_box);
-                        },
-                        "tweaksBrowserpage_apps" => {
-                            update_translation_apps_section(&second_child_child_box);
-                        },
-                        _ => panic!("Unknown widget!"),
-                    }
+                match second_child_child_box.widget_name().as_str() {
+                    "tweaksBrowserpage_options" => {
+                        update_translation_options_section(&second_child_child_box);
+                    },
+                    "tweaksBrowserpage_fixes" => {
+                        update_translation_fixes_section(&second_child_child_box);
+                    },
+                    "tweaksBrowserpage_apps" => {
+                        update_translation_apps_section(&second_child_child_box);
+                    },
+                    _ => panic!("Unknown widget!"),
                 }
             }
+        }
         if let Some(widget) = stack.child_by_name("dnsConnectionsBrowserpage")
-            && let Ok(viewport) = widget.downcast::<gtk::Viewport>() {
-                let second_child =
-                    &viewport.children()[0].clone().downcast::<gtk::Box>().unwrap().children()[1]
-                        .clone()
-                        .downcast::<gtk::Box>()
-                        .unwrap();
+            && let Ok(viewport) = widget.downcast::<gtk::Viewport>()
+        {
+            let second_child =
+                &viewport.children()[0].clone().downcast::<gtk::Box>().unwrap().children()[1]
+                    .clone()
+                    .downcast::<gtk::Box>()
+                    .unwrap();
 
-                for second_child_child_widget in second_child.children() {
-                    let second_child_child_box =
-                        second_child_child_widget.downcast::<gtk::Box>().unwrap();
-                    update_translation_connections_section(&second_child_child_box);
-                }
+            for second_child_child_widget in second_child.children() {
+                let second_child_child_box =
+                    second_child_child_widget.downcast::<gtk::Box>().unwrap();
+                update_translation_connections_section(&second_child_child_box);
             }
+        }
     }
 }

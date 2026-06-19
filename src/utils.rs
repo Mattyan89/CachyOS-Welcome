@@ -69,9 +69,10 @@ pub fn find_iter_in_model(
     if let Some(iter) = model.iter_first() {
         loop {
             if let Ok(value) = model.value(&iter, 0).get::<String>()
-                && value == search_text {
-                    return Some(iter);
-                }
+                && value == search_text
+            {
+                return Some(iter);
+            }
 
             if !model.iter_next(&iter) {
                 break;

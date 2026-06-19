@@ -457,18 +457,20 @@ pub fn install_winboat(callback: RunCmdCallback, dialog_tx: Sender<DialogMessage
 
     // Add the current user to the docker group
     let group_added = get_user_groups().iter().any(|x| x == "docker");
-    if utils::is_alpm_pkg_installed("docker") && !group_added
-        && let Ok(current_user) = env::var("USER") {
-            let failed = utils::pkexec_cmd(&["/sbin/usermod", "-aG", "docker", &current_user])
-                .map_or(true, |s| !s.success());
-            if failed {
-                dialog_tx
-                    .send_blocking(DialogMessage {
-                        msg: fl!("winboat-install-failed"),
-                        msg_type: MessageType::Error,
-                        action: Action::InstallWinboat,
-                    })
-                    .expect("Couldn't send data to channel");
-            }
+    if utils::is_alpm_pkg_installed("docker")
+        && !group_added
+        && let Ok(current_user) = env::var("USER")
+    {
+        let failed = utils::pkexec_cmd(&["/sbin/usermod", "-aG", "docker", &current_user])
+            .map_or(true, |s| !s.success());
+        if failed {
+            dialog_tx
+                .send_blocking(DialogMessage {
+                    msg: fl!("winboat-install-failed"),
+                    msg_type: MessageType::Error,
+                    action: Action::InstallWinboat,
+                })
+                .expect("Couldn't send data to channel");
         }
+    }
 }
