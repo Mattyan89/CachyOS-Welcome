@@ -193,9 +193,9 @@ pub fn has_intel_or_amd_gpu() -> bool {
 pub fn is_kwin_wayland() -> bool {
     Exec::cmd("pgrep")
         .args(&["kwin_wayland"])
-        .stdout(subprocess::NullFile)
+        .stdout(subprocess::Redirection::Null)
         .join()
-        .is_ok_and(subprocess::ExitStatus::success)
+        .is_ok_and(|status: subprocess::ExitStatus| status.success())
 }
 
 #[cfg(test)]
