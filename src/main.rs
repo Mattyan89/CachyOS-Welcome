@@ -13,6 +13,7 @@ mod installer;
 mod kwin_dbus;
 mod localization;
 mod logger;
+mod networkmanager;
 mod pages;
 mod systemd_units;
 mod tweak;
