@@ -24,6 +24,7 @@ enum DnsOp {
 /// Map a [`networkmanager::modify_connection_dns`] outcome to a dialog.
 fn send_dns_result(
     dialog_tx: Sender<DialogMessage>,
+    conn_name: &str,
     result: anyhow::Result<networkmanager::ApplyStatus>,
     operation: DnsOp,
 ) {
@@ -39,7 +40,7 @@ fn send_dns_result(
             (fl!("dns-server-pending"), MessageType::Warning)
         },
         Err(ref dns_err) => {
-            error!("DNS operation failed: {dns_err}");
+            error!("DNS operation failed for connection '{conn_name}': {dns_err}");
             let fail = match operation {
                 DnsOp::Reset => fl!("dns-server-reset-failed"),
                 DnsOp::Change => fl!("dns-server-failed"),
@@ -164,6 +165,7 @@ pub fn change_dns_server(
     };
     send_dns_result(
         dialog_tx,
+        conn_name,
         networkmanager::modify_connection_dns(conn_name, &mods),
         DnsOp::Change,
     );
@@ -184,6 +186,7 @@ pub fn reset_dns_server(conn_name: &str, dialog_tx: Sender<DialogMessage>) {
     };
     send_dns_result(
         dialog_tx,
+        conn_name,
         networkmanager::modify_connection_dns(conn_name, &mods),
         DnsOp::Reset,
     );
@@ -269,7 +272,7 @@ pub fn change_dns_server_blocky(
         Ok(status)
     })();
 
-    send_dns_result(dialog_tx, result, DnsOp::Change);
+    send_dns_result(dialog_tx, conn_name, result, DnsOp::Change);
 }
 
 /// Stop blocky if it's running (used during reset or when switching away from encrypted DNS).
