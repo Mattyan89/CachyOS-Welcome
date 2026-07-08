@@ -152,6 +152,15 @@ fn set(settings: &mut Settings, group: &str, key: &str, val: Value<'static>) {
     settings.entry(group.to_owned()).or_default().insert(key.to_owned(), owned_val);
 }
 
+/// Whether the family's `method` permits DNS settings.
+fn dns_allowed(settings: &Settings, family: &str) -> bool {
+    let method = settings.get(family).and_then(|g| g.get("method"));
+    !matches!(
+        method.and_then(|v| <&str>::try_from(&**v).ok()),
+        Some("disabled" | "ignore" | "link-local" | "shared")
+    )
+}
+
 /// Patch one address family's DNS keys.
 fn patch_family(
     settings: &mut Settings,
@@ -160,10 +169,13 @@ fn patch_family(
     priority: Option<i32>,
     ignore_auto: Option<bool>,
 ) {
+    if !dns_allowed(settings, family) {
+        tracing::debug!("skipping {family} DNS: NM disallows it for this method");
+        return;
+    }
     if let Some(dns) = dns {
-        if let Some(group) = settings.get_mut(family) {
-            group.remove("dns");
-        }
+        // drop legacy binary key
+        settings.entry(family.to_owned()).or_default().remove("dns");
         set(settings, family, "dns-data", Value::from(dns.clone()));
     }
     if let Some(priority) = priority {
@@ -299,6 +311,24 @@ mod test {
         assert!(dns_data(&settings, "ipv4").is_empty());
         assert_eq!(int(&settings, "ipv4", "dns-priority"), Some(0));
         assert_eq!(int(&settings, "connection", "dns-over-tls"), Some(-1));
+    }
+
+    #[test]
+    fn skips_disabled_family() {
+        let mut settings = wifi_settings();
+        settings.insert(
+            "ipv6".to_owned(),
+            HashMap::from([("method".to_owned(), ov("disabled".into()))]),
+        );
+        let mods = DnsMods {
+            ipv4_dns: Some(vec!["1.1.1.1".into()]),
+            ipv6_dns: Some(vec!["2606:4700:4700::1111".into()]),
+            ..Default::default()
+        };
+        apply_dns_patches(&mut settings, &mods);
+
+        assert_eq!(dns_data(&settings, "ipv4"), ["1.1.1.1"]);
+        assert!(!settings["ipv6"].contains_key("dns-data"));
     }
 
     #[test]
