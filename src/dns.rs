@@ -272,7 +272,7 @@ pub fn measure_latency(server_ipv4: &str, probe: &LatencyProbe) -> Option<u128> 
     use std::time::{Duration, Instant};
 
     use hickory_resolver::Resolver;
-    use hickory_resolver::config::{NameServerConfig, ResolverConfig, ResolverOpts};
+    use hickory_resolver::config::{NameServerConfig, ResolveHosts, ResolverConfig, ResolverOpts};
     use hickory_resolver::net::runtime::TokioRuntimeProvider;
 
     // simple domain
@@ -295,6 +295,8 @@ pub fn measure_latency(server_ipv4: &str, probe: &LatencyProbe) -> Option<u128> 
     opts.timeout = Duration::from_secs(3);
     opts.attempts = 1;
     opts.cache_size = 0;
+    // don't read /etc/hosts
+    opts.use_hosts_file = ResolveHosts::Never;
 
     // each call already has its own worker thread
     let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().ok()?;
