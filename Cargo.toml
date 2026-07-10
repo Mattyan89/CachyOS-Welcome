@@ -41,6 +41,15 @@ clap = { features = ["derive"], version = "4" }
 async-channel = "2"
 colored = "3"
 tempfile = "3.27"
+hickory-resolver = { version = "0.26.1", default-features = false, features = [
+    "tokio",
+    "tls-aws-lc-rs",
+    "https-aws-lc-rs",
+    "quic-aws-lc-rs",
+    "h3-aws-lc-rs",
+    "dnssec-aws-lc-rs",
+    "rustls-platform-verifier",
+] }
 
 [build-dependencies]
 anyhow = "1"
