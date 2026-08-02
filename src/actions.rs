@@ -407,7 +407,13 @@ pub fn toggle_tweak(tweak: TweakName, enable: bool, callback: RunCmdCallback) ->
             return false;
         }
         let _ = systemd_units::systemd_enable(&units, scope, true);
+        if !tweak::get_autostart_files(tweak).is_empty() && which::which("arch-update").is_ok() {
+            let _ = utils::run_cmd("arch-update --tray".to_string(), false);
+        }
     } else {
+        if !tweak::get_autostart_files(tweak).is_empty() {
+            let _ = utils::run_cmd("killall arch-update-tray".to_string(), false);
+        }
         let _ = systemd_units::systemd_disable(&units, scope);
         if user_service && tweak::is_globally_enabled(action_data) {
             // try to run with prev explicitly
