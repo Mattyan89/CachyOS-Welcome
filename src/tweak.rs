@@ -30,6 +30,11 @@ pub fn get_details(tweak: TweakName) -> (&'static str, &'static str, &'static st
     }
 }
 
+/// Whether disabling this tweak should also uninstall its package.
+pub fn should_uninstall_on_disable(tweak: TweakName) -> bool {
+    !matches!(tweak, TweakName::Bluetooth | TweakName::Ananicy)
+}
+
 /// Returns autostart desktop filenames associated with a tweak (legacy cleanup).
 pub fn get_autostart_files(tweak: TweakName) -> &'static [&'static str] {
     match tweak {

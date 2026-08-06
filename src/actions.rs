@@ -424,7 +424,10 @@ pub fn toggle_tweak(tweak: TweakName, enable: bool, callback: RunCmdCallback) ->
         if user_service {
             tweak::remove_autostart_files(tweak);
         }
-        if !pkg.is_empty() && utils::is_alpm_pkg_installed(pkg) {
+        if !pkg.is_empty()
+            && tweak::should_uninstall_on_disable(tweak)
+            && utils::is_alpm_pkg_installed(pkg)
+        {
             let _ = utils::run_cmd_terminal(callback, format!("pacman -Rsn {pkg}"), true);
         }
     }
