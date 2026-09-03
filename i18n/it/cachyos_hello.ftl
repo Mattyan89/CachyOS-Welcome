@@ -52,6 +52,7 @@ custom-dns-doq-endpoint = Endpoint DoQ (per DNS su QUIC):
 custom-dns-doq-endpoint-required = Per favore inserisci un endpoint DoQ valido che inizia con quic: o quic://
 dns-check-hint = Dopo l'applicazione, verifica il tuo provider DNS su {$dnscheck_url}
 dns-server-changed = Il server DNS è stato cambiato con successo!
+dns-server-pending = Il server DNS è stato salvato. Riconnetti la rete (o disattivala e riattivala) affinché la modifica abbia effetto.
 dns-server-failed = Impostazione del server DNS non riuscita!
 dns-server-reset = Il server DNS è stato reimpostato!
 dns-server-reset-failed = Reimpostazione del server DNS non riuscita!
